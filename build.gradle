@@ -1,10 +1,13 @@
 plugins {
     id 'application'
     id "com.github.johnrengelman.shadow" version "6.0.0"
+    id "com.palantir.graal" version "0.7.1-9-gced34a0"
 }
 
 group 'at.swimmesberger'
 version '1.0-SNAPSHOT'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -12,6 +15,15 @@ repositories {
 
 application {
     mainClassName = 'at.swimmesberger.bo2.profile.Main'
+}
+
+graal {
+    mainClass application.mainClassName
+    outputName "${project.name}-${project.version}"
+    javaVersion '11'
+    graalVersion '20.1.0'
+    windowsVsVersion '2019'
+    windowsVsEdition 'Community'
 }
 
 compileJava {

@@ -22,6 +22,7 @@ public class DecompressCommand implements Callable<Integer> {
         try {
             if (this.outputFile == null) {
                 profileDataHandler.decompress(this.inputFile, System.out);
+                System.out.flush();
             } else {
                 profileDataHandler.decompress(this.inputFile, this.outputFile);
             }

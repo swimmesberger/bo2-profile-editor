@@ -22,6 +22,7 @@ public class CompressCommand implements Callable<Integer> {
         try {
             if (this.outputFile == null) {
                 profileDataHandler.compress(this.inputFile, System.out);
+                System.out.flush();
             } else {
                 profileDataHandler.compress(this.inputFile, this.outputFile);
             }
