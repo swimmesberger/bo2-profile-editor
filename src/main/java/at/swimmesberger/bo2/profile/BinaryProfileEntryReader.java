@@ -51,7 +51,7 @@ public class BinaryProfileEntryReader extends AbstractProfileEntryReader {
         if (dataType == null) {
             throw new IllegalStateException("Invalid data type '" + dataTypeValue + "'");
         }
-        long offset = this.countingIn.getCount();
+        long offset = this.countingIn.getByteCount();
         ProfileEntry<?> entry;
         switch (dataType) {
             case Int32:
