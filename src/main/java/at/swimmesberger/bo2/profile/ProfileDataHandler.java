@@ -1,22 +1,77 @@
 package at.swimmesberger.bo2.profile;
 
+import at.swimmesberger.bo2.profile.util.FilenameUtils;
+import at.swimmesberger.bo2.profile.util.IOUtils;
 import org.anarres.lzo.*;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 
 // offset 6EF (1755) 1 byte = Golden Keys
 public class ProfileDataHandler {
     protected static final String DECOMPRESSED_FILE_EXT = ".decompressed";
     private static final int BUFFER_SIZE = 8192;
 
+    private final ProfileWriterFactory profileWriterFactory;
+    private final ProfileReaderFactory profileReaderFactory;
+
+    public ProfileDataHandler() {
+        this.profileWriterFactory = new ProfileWriterFactory();
+        this.profileReaderFactory = new ProfileReaderFactory();
+    }
+
+    public void printEntries(Path inputFile, Path outputFile) throws IOException {
+        this.printEntries(inputFile, null, outputFile, null);
+    }
+
+    public void printEntries(Path inputFile, ContainerFormat inputFormat, Path outputFile, ContainerFormat outputFormat) throws IOException {
+        if (outputFormat == null) {
+            outputFormat = this.detectFormat(outputFile);
+        }
+        this.printEntries(inputFile, inputFormat, newFileOutputStream(outputFile), outputFormat);
+    }
+
+    public void printEntries(Path inputFile, ContainerFormat inputFormat, OutputStream outputStream, ContainerFormat outputFormat) throws IOException {
+        if (inputFormat == null) {
+            inputFormat = this.detectFormat(inputFile);
+        }
+        this.printEntries(newFileInputStream(inputFile), inputFormat, outputStream, outputFormat);
+    }
+
+    public void printEntries(InputStream inputStream, ContainerFormat inputFormat, OutputStream outputStream, ContainerFormat outputFormat) throws IOException {
+        InputStream uncompressedStream;
+        if (inputFormat == ContainerFormat.COMPRESSED_LZO) {
+            uncompressedStream = new ByteArrayInputStream(this.decompressInMemory(inputStream));
+            inputFormat = ContainerFormat.BINARY;
+        } else {
+            uncompressedStream = inputStream;
+        }
+        if (outputFormat == ContainerFormat.COMPRESSED_LZO) {
+            byte[] uncompressedData;
+            try (ByteArrayOutputStream bOut = new ByteArrayOutputStream()) {
+                this.printEntriesImpl(uncompressedStream, inputFormat, bOut, outputFormat);
+                uncompressedData = bOut.toByteArray();
+            }
+            this.compress(uncompressedData, outputStream);
+        } else {
+            this.printEntriesImpl(uncompressedStream, inputFormat, outputStream, outputFormat);
+        }
+    }
+
+    private void printEntriesImpl(InputStream inputStream, ContainerFormat inputFormat, OutputStream outputStream, ContainerFormat outputFormat) throws IOException {
+        try (ProfileEntryWriter entryWriter = this.profileWriterFactory.createWriter(outputStream, outputFormat)) {
+            try (ProfileEntryReader entryReader = this.profileReaderFactory.createReader(inputStream, inputFormat)) {
+                entryWriter.write(entryReader.iterateEntries());
+            }
+        }
+    }
+
     public void compress(Path inputFile) throws IOException {
-        this.compress(inputFile, (Path)null);
+        this.compress(inputFile, (Path) null);
     }
 
     public void compress(Path inputFile, Path outputFile) throws IOException {
@@ -24,19 +79,24 @@ public class ProfileDataHandler {
             String baseName = FilenameUtils.getBaseName(inputFile.getFileName().toString());
             outputFile = inputFile.getParent().resolve(baseName);
         }
-        try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(outputFile))) {
+        try (OutputStream outputStream = newFileOutputStream(outputFile)) {
             this.compress(inputFile, outputStream);
         }
     }
 
     public void compress(Path inputFile, OutputStream outputStream) throws IOException {
-        try (InputStream inputStream = Files.newInputStream(inputFile)) {
+        try (InputStream inputStream = newFileInputStream(inputFile)) {
             this.compress(inputStream, outputStream);
         }
     }
 
+
     public void compress(InputStream inputStream, OutputStream outputStream) throws IOException {
         byte[] inputData = this.readBytes(inputStream);
+        this.compress(inputData, outputStream);
+    }
+
+    public void compress(byte[] inputData, OutputStream outputStream) throws IOException {
         int inputDataSize = inputData.length;
         int expectedOutBytes = inputData.length + (inputData.length / 16) + 64 + 3;
         byte[] outData;
@@ -53,9 +113,8 @@ public class ProfileDataHandler {
         outputStream.write(outData, 0, outData.length);
     }
 
-
     public void decompress(Path inputFile) throws IOException {
-        this.decompress(inputFile, (Path)null);
+        this.decompress(inputFile, (Path) null);
     }
 
     public void decompress(Path inputFile, Path outputFile) throws IOException {
@@ -68,9 +127,24 @@ public class ProfileDataHandler {
     }
 
     public void decompress(Path inputFile, OutputStream outputStream) throws IOException {
-        try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile))) {
+        try (InputStream inputStream = this.newFileInputStream(inputFile)) {
             this.decompress(inputStream, outputStream);
         }
+    }
+
+    public byte[] decompressInMemory(Path inputFile) throws IOException {
+        try (InputStream inputStream = this.newFileInputStream(inputFile)) {
+            return this.decompressInMemory(inputStream);
+        }
+    }
+
+    public byte[] decompressInMemory(InputStream inputStream) throws IOException {
+        byte[] data;
+        try (ByteArrayOutputStream bOut = new ByteArrayOutputStream()) {
+            this.decompress(inputStream, bOut);
+            data = bOut.toByteArray();
+        }
+        return data;
     }
 
     public void decompress(InputStream inputStream, OutputStream output) throws IOException {
@@ -140,5 +214,29 @@ public class ProfileDataHandler {
 
     private byte[] readBytes(InputStream in) throws IOException {
         return IOUtils.toByteArray(in);
+    }
+
+    private InputStream newFileInputStream(Path file) throws IOException {
+        return new BufferedInputStream(Files.newInputStream(file));
+    }
+
+    private OutputStream newFileOutputStream(Path file) throws IOException {
+        return new BufferedOutputStream(Files.newOutputStream(file));
+    }
+
+    private ContainerFormat detectFormat(Path inputFile) {
+        String extension = FilenameUtils.getExtension(inputFile.getFileName().toString());
+        extension = extension.toLowerCase(Locale.ENGLISH);
+        if (extension.equals("uncompressed")) {
+            return ContainerFormat.BINARY;
+        } else if (extension.equals("json")) {
+            return ContainerFormat.JSON;
+        } else if (extension.equals("bin")) {
+            return ContainerFormat.COMPRESSED_LZO;
+        } else if (extension.equals("table")) {
+            return ContainerFormat.TABLE;
+        } else {
+            throw new IllegalArgumentException("Invalid input file extension " + extension);
+        }
     }
 }

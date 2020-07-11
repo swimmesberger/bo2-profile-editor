@@ -1,5 +1,6 @@
-package at.swimmesberger.bo2.profile;
+package at.swimmesberger.bo2.profile.cli;
 
+import at.swimmesberger.bo2.profile.ProfileDataHandler;
 import picocli.CommandLine;
 
 import java.io.IOException;

@@ -1,5 +1,7 @@
 package at.swimmesberger.bo2.profile;
 
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Objects;
 
 public class ProfileEntry<T> {
@@ -41,6 +43,14 @@ public class ProfileEntry<T> {
         return value;
     }
 
+    public String getValueString() {
+        return valueString(this.getValue());
+    }
+
+    public String[] toStringArray() {
+        return new String[]{String.valueOf(this.getId()), String.valueOf(this.getOffset()), String.valueOf(this.getLength()), String.valueOf(this.getDataType()), valueString(this.getValue())};
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -50,12 +60,12 @@ public class ProfileEntry<T> {
                 offset == that.offset &&
                 length == that.length &&
                 dataType == that.dataType &&
-                Objects.equals(value, that.value);
+                valueEquals(value, that.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, offset, length, dataType, value);
+        return Objects.hash(id, offset, length, dataType, valueHash(value));
     }
 
     @Override
@@ -65,8 +75,36 @@ public class ProfileEntry<T> {
                 ", offset=" + offset +
                 ", length=" + length +
                 ", dataType=" + dataType +
-                ", value=" + value +
+                ", value=" + valueString(value) +
                 '}';
+    }
+
+    private boolean valueEquals(T o1Value, Object o2Value) {
+        if (o1Value instanceof byte[] && o2Value instanceof byte[]) {
+            byte[] b1 = (byte[]) o1Value;
+            byte[] b2 = (byte[]) o2Value;
+            return Arrays.equals(b1, b2);
+        } else {
+            return Objects.equals(o1Value, o2Value);
+        }
+    }
+
+    private static int valueHash(Object value) {
+        if (value instanceof byte[]) {
+            byte[] b1 = (byte[]) value;
+            return Arrays.hashCode(b1);
+        } else {
+            return Objects.hashCode(value);
+        }
+    }
+
+    private static String valueString(Object value) {
+        if (value instanceof byte[]) {
+            byte[] b1 = (byte[]) value;
+            return Base64.getEncoder().encodeToString(b1);
+        } else {
+            return Objects.toString(value);
+        }
     }
 
     public static final class ProfileEntryBuilder<T> {

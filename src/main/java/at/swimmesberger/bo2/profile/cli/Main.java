@@ -1,4 +1,4 @@
-package at.swimmesberger.bo2.profile;
+package at.swimmesberger.bo2.profile.cli;
 
 import picocli.CommandLine;
 
