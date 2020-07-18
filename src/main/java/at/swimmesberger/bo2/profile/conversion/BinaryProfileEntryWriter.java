@@ -1,4 +1,8 @@
-package at.swimmesberger.bo2.profile;
+package at.swimmesberger.bo2.profile.conversion;
+
+import at.swimmesberger.bo2.profile.ProfileEntry;
+import at.swimmesberger.bo2.profile.ProfileEntryDataType;
+import at.swimmesberger.bo2.profile.ProfileEntryWriter;
 
 import java.io.DataOutputStream;
 import java.io.IOException;

@@ -1,5 +1,6 @@
 package at.swimmesberger.bo2.profile;
 
+import at.swimmesberger.bo2.profile.conversion.BinaryProfileEntryWriter;
 import at.swimmesberger.bo2.profile.util.IOUtils;
 import org.junit.jupiter.api.Test;
 

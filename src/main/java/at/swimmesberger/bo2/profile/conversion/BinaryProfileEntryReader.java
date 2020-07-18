@@ -1,6 +1,9 @@
-package at.swimmesberger.bo2.profile;
+package at.swimmesberger.bo2.profile.conversion;
 
 
+import at.swimmesberger.bo2.profile.ProfileEntry;
+import at.swimmesberger.bo2.profile.ProfileEntryDataType;
+import at.swimmesberger.bo2.profile.ProfileEntryIterator;
 import at.swimmesberger.bo2.profile.util.CountingInputStream;
 
 import java.io.*;

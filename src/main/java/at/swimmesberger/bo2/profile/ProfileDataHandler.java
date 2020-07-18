@@ -1,5 +1,7 @@
 package at.swimmesberger.bo2.profile;
 
+import at.swimmesberger.bo2.profile.conversion.ProfileReaderFactory;
+import at.swimmesberger.bo2.profile.conversion.ProfileWriterFactory;
 import at.swimmesberger.bo2.profile.util.FilenameUtils;
 import at.swimmesberger.bo2.profile.util.IOUtils;
 import org.anarres.lzo.*;

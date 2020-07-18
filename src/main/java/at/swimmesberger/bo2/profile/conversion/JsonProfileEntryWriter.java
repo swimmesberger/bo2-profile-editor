@@ -1,5 +1,8 @@
-package at.swimmesberger.bo2.profile;
+package at.swimmesberger.bo2.profile.conversion;
 
+import at.swimmesberger.bo2.profile.ProfileEntry;
+import at.swimmesberger.bo2.profile.ProfileEntryDataType;
+import at.swimmesberger.bo2.profile.ProfileEntryWriter;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;

@@ -1,5 +1,6 @@
 package at.swimmesberger.bo2.profile;
 
+import at.swimmesberger.bo2.profile.conversion.BinaryProfileEntryReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

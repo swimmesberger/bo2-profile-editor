@@ -1,6 +1,8 @@
-package at.swimmesberger.bo2.profile;
+package at.swimmesberger.bo2.profile.conversion;
 
 
+import at.swimmesberger.bo2.profile.ProfileEntry;
+import at.swimmesberger.bo2.profile.ProfileEntryWriter;
 import at.swimmesberger.bo2.profile.util.StringUtils;
 
 import java.io.*;
