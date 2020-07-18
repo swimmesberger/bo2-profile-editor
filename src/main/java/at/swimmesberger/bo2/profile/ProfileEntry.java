@@ -5,22 +5,62 @@ import java.util.Base64;
 import java.util.Objects;
 
 public class ProfileEntry<T> {
+    private final byte type;
     private final int id;
     private final long offset;
     private final long length;
     private final ProfileEntryDataType dataType;
     private final T value;
 
-    public ProfileEntry(int id, long offset, long length, ProfileEntryDataType dataType, T value) {
+    public ProfileEntry(int type, int id, long offset, long length, ProfileEntryDataType dataType, T value) {
+        this((byte) type, id, offset, length, dataType, value);
+    }
+
+    public ProfileEntry(byte type, int id, long offset, long length, ProfileEntryDataType dataType, T value) {
+        this.type = type;
         this.id = id;
         this.offset = offset;
         this.length = length;
         this.dataType = Objects.requireNonNull(dataType);
         this.value = Objects.requireNonNull(value);
+        if (!dataType.getJavaType().isAssignableFrom(value.getClass())) {
+            throw new IllegalArgumentException("The expected java type of the ProfileEntryDataType '" +
+                    dataType.getJavaType().getSimpleName() +
+                    "' does not match the passed value type '" +
+                    value.getClass().getSimpleName() + "'");
+        }
     }
 
-    public static <T> ProfileEntryBuilder<T> builder() {
-        return new ProfileEntryBuilder<T>();
+    private static int valueHash(Object value) {
+        if (value instanceof byte[]) {
+            byte[] b1 = (byte[]) value;
+            return Arrays.hashCode(b1);
+        } else {
+            return Objects.hashCode(value);
+        }
+    }
+
+    private static String valueString(Object value) {
+        if (value instanceof byte[]) {
+            byte[] b1 = (byte[]) value;
+            return Base64.getEncoder().encodeToString(b1);
+        } else {
+            return Objects.toString(value);
+        }
+    }
+
+    private static boolean valueEquals(Object o1Value, Object o2Value) {
+        if (o1Value instanceof byte[] && o2Value instanceof byte[]) {
+            byte[] b1 = (byte[]) o1Value;
+            byte[] b2 = (byte[]) o2Value;
+            return Arrays.equals(b1, b2);
+        } else {
+            return Objects.equals(o1Value, o2Value);
+        }
+    }
+
+    public byte getType() {
+        return type;
     }
 
     public int getId() {
@@ -48,7 +88,19 @@ public class ProfileEntry<T> {
     }
 
     public String[] toStringArray() {
-        return new String[]{String.valueOf(this.getId()), String.valueOf(this.getOffset()), String.valueOf(this.getLength()), String.valueOf(this.getDataType()), valueString(this.getValue())};
+        return new String[]{String.valueOf(this.getType()), String.valueOf(this.getId()), String.valueOf(this.getOffset()), String.valueOf(this.getLength()), String.valueOf(this.getDataType()), valueString(this.getValue())};
+    }
+
+    @Override
+    public String toString() {
+        return "ProfileEntry{" +
+                "indicator=" + type +
+                ", id=" + id +
+                ", offset=" + offset +
+                ", length=" + length +
+                ", dataType=" + dataType +
+                ", value=" + valueString(value) +
+                '}';
     }
 
     @Override
@@ -56,7 +108,8 @@ public class ProfileEntry<T> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ProfileEntry<?> that = (ProfileEntry<?>) o;
-        return id == that.id &&
+        return type == that.type &&
+                id == that.id &&
                 offset == that.offset &&
                 length == that.length &&
                 dataType == that.dataType &&
@@ -65,97 +118,6 @@ public class ProfileEntry<T> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, offset, length, dataType, valueHash(value));
-    }
-
-    @Override
-    public String toString() {
-        return "ProfileEntry{" +
-                "id=" + id +
-                ", offset=" + offset +
-                ", length=" + length +
-                ", dataType=" + dataType +
-                ", value=" + valueString(value) +
-                '}';
-    }
-
-    private boolean valueEquals(T o1Value, Object o2Value) {
-        if (o1Value instanceof byte[] && o2Value instanceof byte[]) {
-            byte[] b1 = (byte[]) o1Value;
-            byte[] b2 = (byte[]) o2Value;
-            return Arrays.equals(b1, b2);
-        } else {
-            return Objects.equals(o1Value, o2Value);
-        }
-    }
-
-    private static int valueHash(Object value) {
-        if (value instanceof byte[]) {
-            byte[] b1 = (byte[]) value;
-            return Arrays.hashCode(b1);
-        } else {
-            return Objects.hashCode(value);
-        }
-    }
-
-    private static String valueString(Object value) {
-        if (value instanceof byte[]) {
-            byte[] b1 = (byte[]) value;
-            return Base64.getEncoder().encodeToString(b1);
-        } else {
-            return Objects.toString(value);
-        }
-    }
-
-    public static final class ProfileEntryBuilder<T> {
-        private int id;
-        private long offset;
-        private long length;
-        private ProfileEntryDataType dataType;
-        private T value;
-
-        private ProfileEntryBuilder() {
-            this(null);
-        }
-
-        private ProfileEntryBuilder(ProfileEntry<T> entry) {
-            if (entry != null) {
-                this.id = entry.getId();
-                this.offset = entry.getOffset();
-                this.length = entry.getLength();
-                this.dataType = entry.getDataType();
-                this.value = entry.getValue();
-            }
-        }
-
-        public ProfileEntryBuilder<T> withId(int id) {
-            this.id = id;
-            return this;
-        }
-
-        public ProfileEntryBuilder<T> withOffset(long offset) {
-            this.offset = offset;
-            return this;
-        }
-
-        public ProfileEntryBuilder<T> withLength(long length) {
-            this.length = length;
-            return this;
-        }
-
-        public ProfileEntryBuilder<T> withDataType(ProfileEntryDataType dataType) {
-            this.dataType = dataType;
-            return this;
-        }
-
-
-        public ProfileEntryBuilder<T> withValue(T value) {
-            this.value = value;
-            return this;
-        }
-
-        public ProfileEntry<T> build() {
-            return new ProfileEntry<>(id, offset, length, dataType, value);
-        }
+        return Objects.hash(type, id, offset, length, dataType, valueHash(value));
     }
 }

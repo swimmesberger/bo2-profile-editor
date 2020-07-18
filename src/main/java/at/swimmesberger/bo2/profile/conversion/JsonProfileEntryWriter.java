@@ -31,6 +31,8 @@ public class JsonProfileEntryWriter implements ProfileEntryWriter {
     @Override
     public void write(ProfileEntry<?> entry) throws IOException {
         this.jsonGenerator.writeStartObject();
+        this.jsonGenerator.writeFieldName("type");
+        this.jsonGenerator.writeNumber(entry.getType());
         this.jsonGenerator.writeFieldName("id");
         this.jsonGenerator.writeNumber(entry.getId());
         this.jsonGenerator.writeFieldName("offset");

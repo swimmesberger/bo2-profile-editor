@@ -29,13 +29,7 @@ public class BinaryProfileEntryWriter implements ProfileEntryWriter {
     public void write(ProfileEntry<?> entry) throws IOException {
         ProfileEntryDataType dataType = entry.getDataType();
         // entry validation marker?
-        if (this.entryCount == 0) {
-            // the first entry seems to have 1 for this value
-            this.out.writeByte(1);
-        } else {
-            // the others have 2
-            this.out.writeByte(2);
-        }
+        this.out.writeByte(entry.getType());
         this.out.writeInt(entry.getId());
         this.out.writeByte(dataType.getValue());
         switch (dataType) {
@@ -71,8 +65,7 @@ public class BinaryProfileEntryWriter implements ProfileEntryWriter {
     }
 
     @Override
-    public void end() throws IOException {
-
+    public void end() {
     }
 
     @Override

@@ -5,10 +5,12 @@ import at.swimmesberger.bo2.profile.conversion.ProfileWriterFactory;
 import at.swimmesberger.bo2.profile.util.FilenameUtils;
 import at.swimmesberger.bo2.profile.util.IOUtils;
 import org.anarres.lzo.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
@@ -26,25 +28,42 @@ public class ProfileDataHandler {
         this.profileReaderFactory = new ProfileReaderFactory();
     }
 
-    public void printEntries(Path inputFile, Path outputFile) throws IOException {
-        this.printEntries(inputFile, null, outputFile, null);
+    public void convertEntries(Path inputFile, Path outputFile) throws IOException {
+        this.convertEntries(inputFile, null, outputFile, null);
     }
 
-    public void printEntries(Path inputFile, ContainerFormat inputFormat, Path outputFile, ContainerFormat outputFormat) throws IOException {
+    public void convertEntries(Path inputFile, ContainerFormat inputFormat, Path outputFile, ContainerFormat outputFormat) throws IOException {
         if (outputFormat == null) {
             outputFormat = this.detectFormat(outputFile);
         }
-        this.printEntries(inputFile, inputFormat, newFileOutputStream(outputFile), outputFormat);
+        try(OutputStream out = newFileOutputStream(outputFile)) {
+            this.convertEntries(inputFile, inputFormat, out, outputFormat);
+        }
     }
 
-    public void printEntries(Path inputFile, ContainerFormat inputFormat, OutputStream outputStream, ContainerFormat outputFormat) throws IOException {
+    public void convertEntries(Path inputFile, ContainerFormat inputFormat, OutputStream outputStream, ContainerFormat outputFormat) throws IOException {
         if (inputFormat == null) {
             inputFormat = this.detectFormat(inputFile);
         }
-        this.printEntries(newFileInputStream(inputFile), inputFormat, outputStream, outputFormat);
+        try(InputStream in = newFileInputStream(inputFile)) {
+            this.convertEntries(in, inputFormat, outputStream, outputFormat);
+        }
     }
 
-    public void printEntries(InputStream inputStream, ContainerFormat inputFormat, OutputStream outputStream, ContainerFormat outputFormat) throws IOException {
+    public void convertEntries(InputStream inputStream, @NotNull ContainerFormat inputFormat, OutputStream outputStream, @NotNull ContainerFormat outputFormat) throws IOException {
+        if (inputFormat.equals(outputFormat)) {
+            IOUtils.copy(inputStream, outputStream);
+            return;
+        }
+        if (inputFormat == ContainerFormat.COMPRESSED_LZO && outputFormat == ContainerFormat.BINARY) {
+            this.decompress(inputStream, outputStream);
+            return;
+        }
+        if (inputFormat == ContainerFormat.BINARY && outputFormat == ContainerFormat.COMPRESSED_LZO) {
+            this.compress(inputStream, outputStream);
+            return;
+        }
+
         InputStream uncompressedStream;
         if (inputFormat == ContainerFormat.COMPRESSED_LZO) {
             uncompressedStream = new ByteArrayInputStream(this.decompressInMemory(inputStream));
@@ -55,21 +74,36 @@ public class ProfileDataHandler {
         if (outputFormat == ContainerFormat.COMPRESSED_LZO) {
             byte[] uncompressedData;
             try (ByteArrayOutputStream bOut = new ByteArrayOutputStream()) {
-                this.printEntriesImpl(uncompressedStream, inputFormat, bOut, outputFormat);
+                this.convertEntriesImpl(uncompressedStream, inputFormat, bOut, outputFormat);
                 uncompressedData = bOut.toByteArray();
             }
             this.compress(uncompressedData, outputStream);
         } else {
-            this.printEntriesImpl(uncompressedStream, inputFormat, outputStream, outputFormat);
+            this.convertEntriesImpl(uncompressedStream, inputFormat, outputStream, outputFormat);
         }
     }
 
-    private void printEntriesImpl(InputStream inputStream, ContainerFormat inputFormat, OutputStream outputStream, ContainerFormat outputFormat) throws IOException {
+    private void convertEntriesImpl(InputStream inputStream, ContainerFormat inputFormat, OutputStream outputStream, ContainerFormat outputFormat) throws IOException {
         try (ProfileEntryWriter entryWriter = this.profileWriterFactory.createWriter(outputStream, outputFormat)) {
             try (ProfileEntryReader entryReader = this.profileReaderFactory.createReader(inputStream, inputFormat)) {
                 entryWriter.write(entryReader.iterateEntries());
             }
         }
+    }
+
+    public byte[] compressInMemory(Path inputFile) throws IOException {
+        try (InputStream inputStream = this.newFileInputStream(inputFile)) {
+            return this.compressInMemory(inputStream);
+        }
+    }
+
+    public byte[] compressInMemory(InputStream inputStream) throws IOException {
+        byte[] data;
+        try (ByteArrayOutputStream bOut = new ByteArrayOutputStream()) {
+            this.compress(inputStream, bOut);
+            data = bOut.toByteArray();
+        }
+        return data;
     }
 
     public void compress(Path inputFile) throws IOException {
@@ -104,7 +138,7 @@ public class ProfileDataHandler {
         byte[] outData;
         try (ByteArrayOutputStream bout = new ByteArrayOutputStream(expectedOutBytes + 4); DataOutputStream out = new DataOutputStream(bout)) {
             byte[] compressedBytes = new byte[expectedOutBytes];
-            int actualCompressedBytesSize = lzoCompress(inputData, inputData.length, compressedBytes, compressedBytes.length);
+            int actualCompressedBytesSize = lzoCompress(inputData, compressedBytes);
             out.writeInt(inputDataSize);
             out.write(compressedBytes, 0, actualCompressedBytesSize);
             out.flush();
@@ -166,11 +200,11 @@ public class ProfileDataHandler {
         this.writeBytes(uncompressedData, output);
     }
 
-    private byte[] sha1Hash(byte[] data) throws IOException {
+    private byte[] sha1Hash(byte[] data) {
         return this.sha1Hash(data, 0, data.length);
     }
 
-    private byte[] sha1Hash(byte[] data, int offset, int length) throws IOException {
+    private byte[] sha1Hash(byte[] data, int offset, int length) {
         MessageDigest digest = null;
         try {
             digest = MessageDigest.getInstance("SHA-1");
@@ -179,6 +213,10 @@ public class ProfileDataHandler {
         }
         digest.update(data, offset, length);
         return digest.digest();
+    }
+
+    private int lzoCompress(byte[] uncompressedData, byte[] compressedData) {
+        return this.lzoCompress(uncompressedData, uncompressedData.length, compressedData, compressedData.length);
     }
 
     private int lzoCompress(byte[] uncompressedData, int uncompressedSize, byte[] compressedData, int compressedSize) {
@@ -223,22 +261,23 @@ public class ProfileDataHandler {
     }
 
     private OutputStream newFileOutputStream(Path file) throws IOException {
-        return new BufferedOutputStream(Files.newOutputStream(file));
+        return new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
     }
 
     private ContainerFormat detectFormat(Path inputFile) {
         String extension = FilenameUtils.getExtension(inputFile.getFileName().toString());
         extension = extension.toLowerCase(Locale.ENGLISH);
-        if (extension.equals("uncompressed")) {
-            return ContainerFormat.BINARY;
-        } else if (extension.equals("json")) {
-            return ContainerFormat.JSON;
-        } else if (extension.equals("bin")) {
-            return ContainerFormat.COMPRESSED_LZO;
-        } else if (extension.equals("table")) {
-            return ContainerFormat.TABLE;
-        } else {
-            throw new IllegalArgumentException("Invalid input file extension " + extension);
+        switch (extension) {
+            case "uncompressed":
+                return ContainerFormat.BINARY;
+            case "json":
+                return ContainerFormat.JSON;
+            case "bin":
+                return ContainerFormat.COMPRESSED_LZO;
+            case "table":
+                return ContainerFormat.TABLE;
+            default:
+                throw new IllegalArgumentException("Invalid input file extension " + extension);
         }
     }
 }

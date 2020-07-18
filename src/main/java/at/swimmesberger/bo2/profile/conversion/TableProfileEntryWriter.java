@@ -10,8 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class TableProfileEntryWriter implements ProfileEntryWriter {
-    private static final String[] COLUMN_NAMES = new String[]{"ID", "OFF", "LEN", "DATA_TYPE", "VALUE"};
-    private static final int[] COLUMN_WIDTH = new int[]{5, 5, 5, 10, 10};
+    private static final String[] COLUMN_NAMES = new String[]{"TYPE", "ID", "OFF", "LEN", "DATA_TYPE", "VALUE"};
+    private static final int[] COLUMN_WIDTH = new int[]{5, 5, 5, 5, 10, 10};
 
     private final PrintStream outWriter;
     private final String[] formats;
@@ -66,7 +66,7 @@ public class TableProfileEntryWriter implements ProfileEntryWriter {
     }
 
     @Override
-    public void end() throws IOException {
+    public void end() {
         this.outWriter.append(StringUtils.repeat("-", this.fullWidth + 1));
         this.outWriter.println();
     }

@@ -45,8 +45,7 @@ public class JsonProfileEntryReader extends AbstractProfileEntryReader {
     }
 
     @Override
-    public void close() throws IOException {
-
+    public void close() {
     }
 
     private static class JsonProfileEntryIterator implements ProfileEntryIterator {
@@ -87,12 +86,13 @@ public class JsonProfileEntryReader extends AbstractProfileEntryReader {
                 }
 
                 Map<String, Object> objectMap = this.parseNextObject();
+                byte type = ((Long) objectMap.get("type")).byteValue();
                 int id = ((Long) objectMap.get("id")).intValue();
                 long offset = (Long) objectMap.get("offset");
                 long length = (Long) objectMap.get("length");
                 ProfileEntryDataType dataType = ProfileEntryDataType.valueOf((String) objectMap.get("data_type"));
                 Object value = this.convertValue(objectMap.get("value"), dataType);
-                ProfileEntry<?> profileEntry = new ProfileEntry<>(id, offset, length, dataType, value);
+                ProfileEntry<?> profileEntry = new ProfileEntry<>(type, id, offset, length, dataType, value);
                 this.peekToken = this.jsonParser.nextToken();
                 if (this.peekToken == JsonToken.END_ARRAY) {
                     this.eof = true;
@@ -108,7 +108,7 @@ public class JsonProfileEntryReader extends AbstractProfileEntryReader {
             return this.entryCount;
         }
 
-        private Object convertValue(Object value, ProfileEntryDataType type) throws IOException {
+        private Object convertValue(Object value, ProfileEntryDataType type) {
             switch (type) {
                 case Int32:
                     return (Long) value;

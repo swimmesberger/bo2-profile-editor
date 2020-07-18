@@ -17,7 +17,7 @@ public class BinaryProfileEntryReader extends AbstractProfileEntryReader {
     /**
      * InputStream of an uncompressed bo2 profile file
      *
-     * @param in
+     * @param in input stream to work on
      */
     public BinaryProfileEntryReader(InputStream in) {
         Objects.requireNonNull(in);
@@ -36,7 +36,7 @@ public class BinaryProfileEntryReader extends AbstractProfileEntryReader {
         byte entryType = this.in.readByte();
         // the first entry seems to be of type = 1 all others have the type = 2
         if (entryType != 0) {
-            ProfileEntry<?> entry = this.readNextEntryImpl();
+            ProfileEntry<?> entry = this.readNextEntryImpl(entryType);
             // separation byte? (always 0)
             this.in.skipBytes(1);
             return entry;
@@ -47,7 +47,7 @@ public class BinaryProfileEntryReader extends AbstractProfileEntryReader {
         }
     }
 
-    private ProfileEntry<?> readNextEntryImpl() throws IOException {
+    private ProfileEntry<?> readNextEntryImpl(byte entryType) throws IOException {
         int id = this.in.readInt();
         int dataTypeValue = this.in.readUnsignedByte();
         ProfileEntryDataType dataType = ProfileEntryDataType.byValue(dataTypeValue);
@@ -59,7 +59,7 @@ public class BinaryProfileEntryReader extends AbstractProfileEntryReader {
         switch (dataType) {
             case Int32:
                 long int32Value = Integer.toUnsignedLong(this.in.readInt());
-                entry = new ProfileEntry<>(id, offset, 4, ProfileEntryDataType.Int32, int32Value);
+                entry = new ProfileEntry<>(entryType, id, offset, 4, ProfileEntryDataType.Int32, int32Value);
                 break;
             case String:
                 int stringLength = (int) Integer.toUnsignedLong(this.in.readInt());
@@ -67,22 +67,22 @@ public class BinaryProfileEntryReader extends AbstractProfileEntryReader {
                 int stringReadBytes = this.in.read(asciiBytes);
                 if (stringReadBytes != stringLength) throw new EOFException("Unexpected end of file!");
                 String stringValue = new String(asciiBytes, StandardCharsets.US_ASCII);
-                entry = new ProfileEntry<>(id, offset, stringLength, ProfileEntryDataType.String, stringValue);
+                entry = new ProfileEntry<>(entryType, id, offset, stringLength, ProfileEntryDataType.String, stringValue);
                 break;
             case Float:
                 float precisionValue = this.in.readFloat();
-                entry = new ProfileEntry<>(id, offset, 4, ProfileEntryDataType.Float, precisionValue);
+                entry = new ProfileEntry<>(entryType, id, offset, 4, ProfileEntryDataType.Float, precisionValue);
                 break;
             case Binary:
                 int binaryLength = (int) Integer.toUnsignedLong(this.in.readInt());
                 byte[] binData = new byte[binaryLength];
                 int binReadBytes = this.in.read(binData);
                 if (binReadBytes != binaryLength) throw new EOFException("Unexpected end of file!");
-                entry = new ProfileEntry<>(id, offset, binaryLength, ProfileEntryDataType.Binary, binData);
+                entry = new ProfileEntry<>(entryType, id, offset, binaryLength, ProfileEntryDataType.Binary, binData);
                 break;
             case Int8:
                 int int8Value = this.in.readUnsignedByte();
-                entry = new ProfileEntry<>(id, offset, 1, ProfileEntryDataType.Int8, int8Value);
+                entry = new ProfileEntry<>(entryType, id, offset, 1, ProfileEntryDataType.Int8, int8Value);
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported data type " + dataType);

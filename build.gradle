@@ -38,6 +38,7 @@ dependencies {
     compile group: 'org.anarres.lzo', name: 'lzo-commons', version: '1.0.6'
     compile group: 'info.picocli', name: 'picocli', version: '4.4.0'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.11.1'
+    compile group: 'org.jetbrains', name: 'annotations', version: '19.0.0'
 
     annotationProcessor 'info.picocli:picocli-codegen:4.4.0'
 
