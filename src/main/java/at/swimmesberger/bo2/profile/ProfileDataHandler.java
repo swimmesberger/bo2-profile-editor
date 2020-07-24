@@ -15,7 +15,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 
-// offset 6EF (1755) 1 byte = Golden Keys
 public class ProfileDataHandler {
     protected static final String DECOMPRESSED_FILE_EXT = ".decompressed";
     private static final int BUFFER_SIZE = 8192;

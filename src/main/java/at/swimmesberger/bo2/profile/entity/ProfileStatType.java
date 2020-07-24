@@ -1,0 +1,5 @@
+package at.swimmesberger.bo2.profile.entity;
+
+public enum ProfileStatType {
+    MAXIMUM_HEALTH, SHIELD_CAPACITY, SHIELD_RECHARGE_DELAY, SHIELD_RECHARGE_RATE, MELLEE_DAMAGE, GRENADE_DAMAGE, GUN_ACCURACY
+}

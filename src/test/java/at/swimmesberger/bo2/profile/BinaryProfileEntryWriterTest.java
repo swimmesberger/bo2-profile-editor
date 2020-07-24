@@ -15,7 +15,7 @@ public class BinaryProfileEntryWriterTest {
     public void testProfile1() throws IOException {
         byte[] writtenData;
         try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); BinaryProfileEntryWriter writer = new BinaryProfileEntryWriter(bout)) {
-            writer.write(ProfileEntryFixtures.createProfile1Entries());
+            writer.write(TestFixtures.createProfile1Entries());
             writtenData = bout.toByteArray();
         }
         assertTrue(IOUtils.contentEquals(new ByteArrayInputStream(writtenData), BinaryProfileEntryWriterTest.class.getResourceAsStream("profile1.bin.uncompressed")));

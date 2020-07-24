@@ -15,7 +15,7 @@ public class BinaryProfileEntryReaderTest {
         try (InputStream in = BinaryProfileEntryReaderTest.class.getResourceAsStream("profile1.bin.uncompressed")) {
             BinaryProfileEntryReader reader = new BinaryProfileEntryReader(in);
             List<ProfileEntry<?>> entries = reader.readEntries();
-            List<ProfileEntry<?>> expectedEntries = ProfileEntryFixtures.createProfile1Entries();
+            List<ProfileEntry<?>> expectedEntries = TestFixtures.createProfile1Entries();
 
             assertEquals(expectedEntries.size(), entries.size());
 

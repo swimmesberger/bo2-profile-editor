@@ -15,7 +15,7 @@ public class JsonProfileEntryReaderTest {
         try (InputStream in = BinaryProfileEntryReaderTest.class.getResourceAsStream("profile1.json")) {
             JsonProfileEntryReader reader = new JsonProfileEntryReader(in);
             List<ProfileEntry<?>> entries = reader.readEntries();
-            List<ProfileEntry<?>> expectedEntries = ProfileEntryFixtures.createProfile1Entries();
+            List<ProfileEntry<?>> expectedEntries = TestFixtures.createProfile1Entries();
 
             assertEquals(expectedEntries.size(), entries.size());
 

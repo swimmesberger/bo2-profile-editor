@@ -23,6 +23,8 @@ public class ProfileDataHandlerTest {
         assertArrayEquals(compUncompressed, uncompressed);
     }
 
+    // currently fails because the compression algorithm produces different results for us (but seems to be readable?)
+    // maybe the used lzo version differs
     @Test
     public void testCompress() throws IOException {
         ProfileDataHandler profileDataHandler = new ProfileDataHandler();
