@@ -1,7 +1,7 @@
 package at.swimmesberger.bo2.profile.cli;
 
 import at.swimmesberger.bo2.profile.ContainerFormat;
-import at.swimmesberger.bo2.profile.ProfileDataHandler;
+import at.swimmesberger.bo2.profile.ProfileEntryDataHandler;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -24,17 +24,17 @@ public class ConversionCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        ProfileDataHandler profileDataHandler = new ProfileDataHandler();
+        ProfileEntryDataHandler profileEntryDataHandler = new ProfileEntryDataHandler();
         try {
             if (this.outputFile == null) {
                 ContainerFormat outputFormat = this.outputFormat;
                 if(outputFormat == null) {
                     outputFormat = ContainerFormat.TABLE;
                 }
-                profileDataHandler.convertEntries(this.inputFile, this.inputFormat, System.out, outputFormat);
+                profileEntryDataHandler.convertEntries(this.inputFile, this.inputFormat, System.out, outputFormat);
                 System.out.flush();
             } else {
-                profileDataHandler.convertEntries(this.inputFile, this.inputFormat, this.outputFile, this.outputFormat);
+                profileEntryDataHandler.convertEntries(this.inputFile, this.inputFormat, this.outputFile, this.outputFormat);
             }
             return 0;
         } catch (IOException ioException) {

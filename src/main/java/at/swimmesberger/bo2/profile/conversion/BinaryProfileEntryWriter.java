@@ -12,12 +12,10 @@ import java.util.Objects;
 
 public class BinaryProfileEntryWriter implements ProfileEntryWriter {
     private final DataOutputStream out;
-    private long entryCount;
 
     public BinaryProfileEntryWriter(OutputStream out) {
         Objects.requireNonNull(out);
         this.out = new DataOutputStream(out);
-        this.entryCount = 0;
     }
 
     @Override
@@ -61,7 +59,6 @@ public class BinaryProfileEntryWriter implements ProfileEntryWriter {
         }
         // separation byte?
         this.out.writeByte(0);
-        this.entryCount += 1;
     }
 
     @Override

@@ -5,10 +5,26 @@ import java.util.Objects;
 
 // we have not fully reversed the customizations format but 255 a byte means everything unlocked and 0 nothing unlocked
 public class ProfileCustomizations {
+    private static final int DEFAULT_CUSTOMIZATION_LENGTH = 1001;
+    private static final int UNLOCKED = 255;
+    private static final int LOCKED = 0;
+
     private final int[] customizations;
 
     public ProfileCustomizations(int[] customizations) {
         this.customizations = Objects.requireNonNull(customizations);
+    }
+
+    public static ProfileCustomizations allUnlocked() {
+        int[] customizations = new int[DEFAULT_CUSTOMIZATION_LENGTH];
+        Arrays.fill(customizations, UNLOCKED);
+        return new ProfileCustomizations(customizations);
+    }
+
+    public static ProfileCustomizations allLocked() {
+        int[] customizations = new int[DEFAULT_CUSTOMIZATION_LENGTH];
+        Arrays.fill(customizations, LOCKED);
+        return new ProfileCustomizations(customizations);
     }
 
     public int[] getCustomizations() {
@@ -17,14 +33,32 @@ public class ProfileCustomizations {
 
     public ProfileCustomizations unlockAll() {
         int[] copiedCustomizations = new int[this.customizations.length];
-        Arrays.fill(copiedCustomizations, 255);
+        Arrays.fill(copiedCustomizations, UNLOCKED);
         return new ProfileCustomizations(copiedCustomizations);
     }
 
     public ProfileCustomizations lockAll() {
         int[] copiedCustomizations = new int[this.customizations.length];
-        Arrays.fill(copiedCustomizations, 0);
+        Arrays.fill(copiedCustomizations, LOCKED);
         return new ProfileCustomizations(copiedCustomizations);
+    }
+
+    public boolean isAllLocked() {
+        for (int customization : this.customizations) {
+            if (customization != LOCKED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean isAllUnlocked() {
+        for (int customization : this.customizations) {
+            if (customization != UNLOCKED) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

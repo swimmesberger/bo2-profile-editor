@@ -8,16 +8,16 @@ import java.io.InputStream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-public class ProfileDataHandlerTest {
+public class ProfileEntryDataHandlerTest {
     @Test
     public void testDecompress() throws IOException {
-        ProfileDataHandler profileDataHandler = new ProfileDataHandler();
+        ProfileEntryDataHandler profileEntryDataHandler = new ProfileEntryDataHandler();
         byte[] uncompressed;
-        try(InputStream in = ProfileDataHandlerTest.class.getResourceAsStream("profile1.bin")) {
-            uncompressed = profileDataHandler.decompressInMemory(in);
+        try(InputStream in = ProfileEntryDataHandlerTest.class.getResourceAsStream("profile1.bin")) {
+            uncompressed = profileEntryDataHandler.decompressInMemory(in);
         }
         byte[] compUncompressed;
-        try(InputStream in = ProfileDataHandler.class.getResourceAsStream("profile1.bin.uncompressed")) {
+        try(InputStream in = ProfileEntryDataHandler.class.getResourceAsStream("profile1.bin.uncompressed")) {
             compUncompressed = IOUtils.toByteArray(in);
         }
         assertArrayEquals(compUncompressed, uncompressed);
@@ -27,13 +27,13 @@ public class ProfileDataHandlerTest {
     // maybe the used lzo version differs
     @Test
     public void testCompress() throws IOException {
-        ProfileDataHandler profileDataHandler = new ProfileDataHandler();
+        ProfileEntryDataHandler profileEntryDataHandler = new ProfileEntryDataHandler();
         byte[] compressed;
-        try(InputStream in = ProfileDataHandlerTest.class.getResourceAsStream("profile1.bin.uncompressed")) {
-            compressed = profileDataHandler.compressInMemory(in);
+        try(InputStream in = ProfileEntryDataHandlerTest.class.getResourceAsStream("profile1.bin.uncompressed")) {
+            compressed = profileEntryDataHandler.compressInMemory(in);
         }
         byte[] compCompressed;
-        try(InputStream in = ProfileDataHandler.class.getResourceAsStream("profile1.bin")) {
+        try(InputStream in = ProfileEntryDataHandler.class.getResourceAsStream("profile1.bin")) {
             compCompressed = IOUtils.toByteArray(in);
         }
         assertArrayEquals(compCompressed, compressed);

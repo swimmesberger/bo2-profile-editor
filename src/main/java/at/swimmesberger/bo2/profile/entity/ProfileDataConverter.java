@@ -2,10 +2,9 @@ package at.swimmesberger.bo2.profile.entity;
 
 import at.swimmesberger.bo2.profile.ProfileEntries;
 import at.swimmesberger.bo2.profile.ProfileEntry;
+import at.swimmesberger.bo2.profile.ProfileEntryDataType;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.io.*;
 
 public class ProfileDataConverter {
     private static final int BADASS_RANK_ID = 136;
@@ -20,13 +19,23 @@ public class ProfileDataConverter {
         this.statsDecoder = new ProfileStatsEncoding();
     }
 
-    public ProfileData convert(ProfileEntries entries) {
+    public ProfileData decodeEntries(ProfileEntries entries) {
         int goldenKeys = this.getGoldenKeys(entries);
         ProfileStats profileStats = this.getProfileStats(entries);
         long badassRank = this.getBadassRank(entries);
         long badassTokens = this.getBadassTokens(entries);
         ProfileCustomizations customizations = getCustomizations(entries);
         return new ProfileData(goldenKeys, profileStats, badassRank, badassTokens, customizations);
+    }
+
+    public ProfileEntries encodeEntries(ProfileData data, ProfileEntries entries) {
+        ProfileEntries.ProfileEntriesBuilder entriesBuilder = ProfileEntries.builder(entries);
+        this.setGoldenKeys(entriesBuilder, data.getGoldenKeys());
+        this.setProfileStats(entriesBuilder, data.getStats());
+        this.setBadassRank(entriesBuilder, data.getBadassRank());
+        this.setBadassToken(entriesBuilder, data.getBadassTokens());
+        this.setProfileCustomizations(entriesBuilder, data.getCustomizations());
+        return entriesBuilder.build();
     }
 
     // 300 = customizations
@@ -43,13 +52,13 @@ public class ProfileDataConverter {
     }
 
     private long getBadassRank(ProfileEntries entries) {
-        ProfileEntry<Long> statsEntry = (ProfileEntry<Long>) entries.getEntry(BADASS_RANK_ID);
-        return statsEntry.getValue();
+        ProfileEntry<Long> badassEntry = (ProfileEntry<Long>) entries.getEntry(BADASS_RANK_ID);
+        return badassEntry.getValue();
     }
 
     private long getBadassTokens(ProfileEntries entries) {
-        ProfileEntry<Long> statsEntry = (ProfileEntry<Long>) entries.getEntry(BADASS_TOKENS_ID);
-        return statsEntry.getValue();
+        ProfileEntry<Long> badassEntry = (ProfileEntry<Long>) entries.getEntry(BADASS_TOKENS_ID);
+        return badassEntry.getValue();
     }
 
     private int getGoldenKeys(ProfileEntries entries) {
@@ -71,7 +80,7 @@ public class ProfileDataConverter {
                 goldenKeys += subKeyVal;
             }
         } catch (IOException ex) {
-            //ignore
+            throw new UncheckedIOException(ex);
         }
         return goldenKeys;
     }
@@ -81,5 +90,69 @@ public class ProfileDataConverter {
         ProfileEntry<String> statsEntry = (ProfileEntry<String>) entries.getEntry(STATS_ID);
         String encodedString = statsEntry.getValue();
         return this.statsDecoder.decode(encodedString);
+    }
+
+    private void setGoldenKeys(ProfileEntries.ProfileEntriesBuilder builder, int goldenKeys) {
+        byte[] goldenKeyData;
+        try (ByteArrayOutputStream bOut = new ByteArrayOutputStream(); DataOutputStream dOut = new DataOutputStream(bOut)) {
+            int writeCount = goldenKeys / 255;
+            goldenKeyData = bOut.toByteArray();
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+        ProfileEntry<byte[]> goldenKeyEntry = (ProfileEntry<byte[]>) builder.getEntry(GOLDEN_KEYS_ID);
+        if (goldenKeyEntry == null) {
+            goldenKeyEntry = new ProfileEntry<>(GOLDEN_KEYS_ID, ProfileEntryDataType.Binary, goldenKeyData);
+        } else {
+            goldenKeyEntry = goldenKeyEntry.withValue(goldenKeyData);
+        }
+        builder.withEntry(goldenKeyEntry);
+    }
+
+    private void setBadassRank(ProfileEntries.ProfileEntriesBuilder builder, long badassRank) {
+        ProfileEntry<Long> badassEntry = (ProfileEntry<Long>) builder.getEntry(BADASS_RANK_ID);
+        if (badassEntry == null) {
+            badassEntry = new ProfileEntry<>(BADASS_RANK_ID, ProfileEntryDataType.Int32, badassRank);
+        } else {
+            badassEntry = badassEntry.withValue(badassRank);
+        }
+        builder.withEntry(badassEntry);
+    }
+
+    private void setBadassToken(ProfileEntries.ProfileEntriesBuilder builder, long badassToken) {
+        ProfileEntry<Long> badassEntry = (ProfileEntry<Long>) builder.getEntry(BADASS_TOKENS_ID);
+        if (badassEntry == null) {
+            badassEntry = new ProfileEntry<>(BADASS_TOKENS_ID, ProfileEntryDataType.Int32, badassToken);
+        } else {
+            badassEntry = badassEntry.withValue(badassToken);
+        }
+        builder.withEntry(badassEntry);
+    }
+
+    private void setProfileStats(ProfileEntries.ProfileEntriesBuilder builder, ProfileStats stats) {
+        ProfileEntry<String> statsEntry = (ProfileEntry<String>) builder.getEntry(STATS_ID);
+        String encodedStats = this.statsDecoder.encode(stats);
+        if (statsEntry == null) {
+            statsEntry = new ProfileEntry<>(STATS_ID, ProfileEntryDataType.String, encodedStats);
+        } else {
+            statsEntry = statsEntry.withValue(encodedStats);
+        }
+        builder.withEntry(statsEntry);
+    }
+
+    private void setProfileCustomizations(ProfileEntries.ProfileEntriesBuilder builder, ProfileCustomizations customizations) {
+        ProfileEntry<byte[]> statsEntry = (ProfileEntry<byte[]>) builder.getEntry(CUSTOMIZATIONS_ID);
+        int[] customData = customizations.getCustomizations();
+        byte[] data = new byte[customData.length];
+        for (int i = 0; i < data.length; i++) {
+            int value = customData[i];
+            data[i] = (byte) value;
+        }
+        if (statsEntry == null) {
+            statsEntry = new ProfileEntry<>(CUSTOMIZATIONS_ID, ProfileEntryDataType.Binary, data);
+        } else {
+            statsEntry = statsEntry.withValue(data);
+        }
+        builder.withEntry(statsEntry);
     }
 }

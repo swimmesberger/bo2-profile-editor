@@ -12,6 +12,10 @@ public class ProfileEntry<T> {
     private final ProfileEntryDataType dataType;
     private final T value;
 
+    public ProfileEntry(int id, ProfileEntryDataType dataType, T value) {
+        this(2, id, -1, -1, dataType, value);
+    }
+
     public ProfileEntry(int type, int id, long offset, long length, ProfileEntryDataType dataType, T value) {
         this((byte) type, id, offset, length, dataType, value);
     }
@@ -89,6 +93,10 @@ public class ProfileEntry<T> {
 
     public String[] toStringArray() {
         return new String[]{String.valueOf(this.getType()), String.valueOf(this.getId()), String.valueOf(this.getOffset()), String.valueOf(this.getLength()), String.valueOf(this.getDataType()), valueString(this.getValue())};
+    }
+
+    public ProfileEntry<T> withValue(T value) {
+        return new ProfileEntry<>(this.getType(), this.getId(), this.getOffset(), this.getLength(), this.getDataType(), value);
     }
 
     @Override

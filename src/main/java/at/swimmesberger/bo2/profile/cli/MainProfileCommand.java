@@ -5,7 +5,8 @@ import picocli.CommandLine;
 @CommandLine.Command(
         subcommands = {
                 ConversionCommand.class,
-                SetCommand.class
+                SetCommand.class,
+                GetCommand.class
         }
 )
 public class MainProfileCommand {
