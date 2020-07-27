@@ -4,8 +4,6 @@ import at.swimmesberger.bo2.profile.ProfileEntries;
 import at.swimmesberger.bo2.profile.ProfileEntry;
 import at.swimmesberger.bo2.profile.ProfileEntryDataType;
 
-import java.io.*;
-
 public class ProfileDataConverter {
     private static final int BADASS_RANK_ID = 136;
     private static final int BADASS_TOKENS_ID = 138;
@@ -14,9 +12,11 @@ public class ProfileDataConverter {
     private static final int CUSTOMIZATIONS_ID = 300;
 
     private final ProfileStatsEncoding statsDecoder;
+    private final GoldenKeysEncoding goldenKeysDecoder;
 
     public ProfileDataConverter() {
         this.statsDecoder = new ProfileStatsEncoding();
+        this.goldenKeysDecoder = new GoldenKeysEncoding();
     }
 
     public ProfileData decodeEntries(ProfileEntries entries) {
@@ -66,27 +66,9 @@ public class ProfileDataConverter {
     }
 
     private int getGoldenKeys(ProfileEntries entries) {
-        // golden key data structure
-        // 1 byte = unknown
-        // 1 byte - 1 byte = value
-        // 1 byte = unknown
-        // 1 byte = 1 byte = value
-        // ...
         ProfileEntry<byte[]> goldenKeyEntry = (ProfileEntry<byte[]>) entries.getEntry(GOLDEN_KEYS_ID);
         byte[] goldenKeyData = goldenKeyEntry.getValue();
-        int goldenKeys = 0;
-        try (ByteArrayInputStream bIn = new ByteArrayInputStream(goldenKeyData); DataInputStream dIn = new DataInputStream(bIn)) {
-            int indicatorByte;
-            while ((indicatorByte = dIn.read()) != -1) {
-                int subKeyVal1 = dIn.readByte();
-                int subKeyVal2 = dIn.readByte();
-                int subKeyVal = subKeyVal1 - subKeyVal2;
-                goldenKeys += subKeyVal;
-            }
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
-        return goldenKeys;
+        return this.goldenKeysDecoder.decode(goldenKeyData);
     }
 
     // special string encoding
@@ -97,13 +79,7 @@ public class ProfileDataConverter {
     }
 
     private void setGoldenKeys(ProfileEntries.ProfileEntriesBuilder builder, int goldenKeys) {
-        byte[] goldenKeyData;
-        try (ByteArrayOutputStream bOut = new ByteArrayOutputStream(); DataOutputStream dOut = new DataOutputStream(bOut)) {
-            int writeCount = goldenKeys / 255;
-            goldenKeyData = bOut.toByteArray();
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
+        byte[] goldenKeyData = this.goldenKeysDecoder.encode(goldenKeys);
         ProfileEntry<byte[]> goldenKeyEntry = (ProfileEntry<byte[]>) builder.getEntry(GOLDEN_KEYS_ID);
         if (goldenKeyEntry == null) {
             goldenKeyEntry = new ProfileEntry<>(GOLDEN_KEYS_ID, ProfileEntryDataType.Binary, goldenKeyData);
