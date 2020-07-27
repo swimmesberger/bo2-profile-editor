@@ -1,7 +1,7 @@
 package at.swimmesberger.bo2.profile.cli;
 
-import at.swimmesberger.bo2.profile.ContainerFormat;
-import at.swimmesberger.bo2.profile.ProfileEntryDataHandler;
+import at.swimmesberger.bo2.profile.entity.CombinedContainerFormat;
+import at.swimmesberger.bo2.profile.entity.ProfileDataHandler;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -11,25 +11,25 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = "convert", mixinStandardHelpOptions = true,
         version = "convert 1.0",
         description = "Converts the input data into the output file with the passed format.")
-public class ConversionCommand implements Callable<Integer> {
+public class ConvertCommand implements Callable<Integer> {
     @CommandLine.Parameters(index = "0", arity = "1",
             description = "The input file to print.")
     private Path inputFile;
     @CommandLine.Option(names = {"-if", "--in-format"}, description = "Input format (available: ${COMPLETION-CANDIDATES} default: COMPRESSED_LZO)")
-    private ContainerFormat inputFormat;
+    private CombinedContainerFormat inputFormat;
     @CommandLine.Option(names = {"-o", "--out"}, description = "Output file (default: print to console)")
     private Path outputFile;
-    @CommandLine.Option(names = {"-of", "--out-format"}, description = "Output format (available: ${COMPLETION-CANDIDATES} default: TABLE)")
-    private ContainerFormat outputFormat;
+    @CommandLine.Option(names = {"-of", "--out-format"}, description = "Output format (available: ${COMPLETION-CANDIDATES} default: TABLE_DATA)")
+    private CombinedContainerFormat outputFormat;
 
     @Override
     public Integer call() {
-        ProfileEntryDataHandler profileEntryDataHandler = new ProfileEntryDataHandler();
+        ProfileDataHandler profileEntryDataHandler = new ProfileDataHandler();
         try {
             if (this.outputFile == null) {
-                ContainerFormat outputFormat = this.outputFormat;
+                CombinedContainerFormat outputFormat = this.outputFormat;
                 if(outputFormat == null) {
-                    outputFormat = ContainerFormat.TABLE;
+                    outputFormat = CombinedContainerFormat.TABLE_DATA;
                 }
                 profileEntryDataHandler.convertEntries(this.inputFile, this.inputFormat, System.out, outputFormat);
                 System.out.flush();

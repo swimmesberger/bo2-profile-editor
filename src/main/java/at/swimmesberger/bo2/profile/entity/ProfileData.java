@@ -61,10 +61,8 @@ public class ProfileData {
                 return this.getBadassRank();
             case BADASS_TOKENS:
                 return this.getBadassTokens();
-            case UNLOCK_ALL_CUSTOMIZATIONS:
+            case ALL_CUSTOMIZATIONS:
                 return this.getCustomizations().isAllUnlocked();
-            case LOCK_ALL_CUSTOMIZATIONS:
-                return this.getCustomizations().isAllLocked();
             default:
                 return this.stats.getValue(type);
         }
@@ -116,6 +114,8 @@ public class ProfileData {
                 this.badassRank = profileData.getBadassRank();
                 this.badassTokens = profileData.getBadassTokens();
                 this.customizations = profileData.getCustomizations();
+            } else {
+                this.stats = ProfileStats.builder();
             }
         }
 
@@ -173,20 +173,12 @@ public class ProfileData {
                 case BADASS_TOKENS:
                     this.withBadassTokens(ParseUtils.objectToLong(value));
                     break;
-                case UNLOCK_ALL_CUSTOMIZATIONS:
+                case ALL_CUSTOMIZATIONS:
                     boolean unlockFlag = ParseUtils.objectToBoolean(value);
                     if (unlockFlag) {
                         this.withUnlockedCustomizations();
                     } else {
                         this.withLockedCustomizations();
-                    }
-                    break;
-                case LOCK_ALL_CUSTOMIZATIONS:
-                    boolean lockFlag = ParseUtils.objectToBoolean(value);
-                    if (lockFlag) {
-                        this.withLockedCustomizations();
-                    } else {
-                        this.withUnlockedCustomizations();
                     }
                     break;
                 default:

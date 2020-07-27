@@ -1,7 +1,7 @@
-package at.swimmesberger.bo2.profile;
+package at.swimmesberger.bo2.profile.entity;
 
-import at.swimmesberger.bo2.profile.entity.ProfileStats;
-import at.swimmesberger.bo2.profile.entity.ProfileStatsEncoding;
+import at.swimmesberger.bo2.profile.TestFixtures;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,7 +18,7 @@ public class ProfileStatsEncodingTest {
     public void testDecodeMixed() {
         ProfileStatsEncoding decoder = new ProfileStatsEncoding();
         ProfileStats stats = decoder.decode("RPMC3DAVJJDMSEBAPH6ZD9S6T4M55V8KJPMC3DJTJJDMS4BAPH6NC9S6TWK55V8K1PMC3DARJJDM93BAPH6QF9S6T4");
-        assertEquals(TestFixtures.createMixedStats(), stats);
+        Assertions.assertEquals(TestFixtures.createMixedStats(), stats);
     }
 
     @Test

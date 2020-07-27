@@ -28,6 +28,10 @@ public class ProfileDataConverter {
         return new ProfileData(goldenKeys, profileStats, badassRank, badassTokens, customizations);
     }
 
+    public ProfileEntries encodeEntries(ProfileData data) {
+        return this.encodeEntries(data, ProfileEntries.builder().build());
+    }
+
     public ProfileEntries encodeEntries(ProfileData data, ProfileEntries entries) {
         ProfileEntries.ProfileEntriesBuilder entriesBuilder = ProfileEntries.builder(entries);
         this.setGoldenKeys(entriesBuilder, data.getGoldenKeys());

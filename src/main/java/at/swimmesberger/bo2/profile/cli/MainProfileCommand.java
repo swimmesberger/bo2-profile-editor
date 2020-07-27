@@ -4,7 +4,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
         subcommands = {
-                ConversionCommand.class,
+                ConvertCommand.class,
                 SetCommand.class,
                 GetCommand.class
         }
