@@ -2,7 +2,7 @@
 
 ![CI Build](https://github.com/swimmesberger/bo2-profile-editor/workflows/CI%20Build/badge.svg)
 
-# Usage:
+## Usage:
 <pre>
 Usage: <main class> [COMMAND]
 Commands:
@@ -12,6 +12,6 @@ Commands:
 </pre>
 Borderlands 2 profile can be found here C:\Users\\%username\%\Documents\My Games\Borderlands 2\WillowGame\SaveData\\%PROFILE_ID\%\profile.bin
 
-# TODO:
+## TODO:
 * More documentation
 * Contribute to the Fandom wiki which helped as a starting point (https://borderlands.fandom.com/wiki/Forum:Modding_Borderlands_2)
