@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'at.swimmesberger'
-version '1.0-SNAPSHOT'
+version '1.0.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -22,8 +22,9 @@ graal {
     outputName "${project.name}-${project.version}"
     javaVersion '11'
     graalVersion '20.1.0'
-    windowsVsVersion '2019'
-    windowsVsEdition 'Community'
+    windowsVsVersion System.getenv('VS_VERSION')
+    windowsVsEdition System.getenv('VS_EDITION')
+    windowsVsVarsPath System.getenv('VC_VARS_PATH')
 }
 
 compileJava {
@@ -33,6 +34,9 @@ compileJava {
 test {
     useJUnitPlatform()
 }
+
+// execute shadowJar when build is called
+tasks.build.dependsOn(shadowJar);
 
 dependencies {
     compile group: 'org.anarres.lzo', name: 'lzo-commons', version: '1.0.6'
