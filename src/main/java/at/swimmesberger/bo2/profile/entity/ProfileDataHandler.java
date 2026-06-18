@@ -97,6 +97,11 @@ public class ProfileDataHandler {
         }
     }
 
+    public ProfileData readData(Path inputFile) throws IOException {
+        ProfileEntries entries = this.entryDataHandler.readEntries(inputFile);
+        return this.profileDataConverter.decodeEntries(entries);
+    }
+
     public String getValue(Path inputFile, ProfileDataValueType type) throws IOException {
         String value;
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
@@ -127,5 +132,18 @@ public class ProfileDataHandler {
         ProfileData modifiedData = data.setValue(type, value);
         ProfileEntries modifiedEntries = this.profileDataConverter.encodeEntries(modifiedData, entries);
         this.entryDataHandler.writeEntries(modifiedEntries, outputStreamSupplier, outputFormat);
+    }
+
+    public void setValues(Path inputFile, Path outputFile, java.util.Map<ProfileDataValueType, String> values) throws IOException {
+        EntriesContainerFormat outputFormat = ProfileHandlerUtil.detectEntriesFormat(outputFile);
+        try (OutputStreamSupplier.CloseableOutputStreamSupplier outputStreamSupplier = ProfileHandlerUtil.newFileOutputSupplier(outputFile)) {
+            ProfileEntries entries = this.entryDataHandler.readEntries(inputFile);
+            ProfileData data = this.profileDataConverter.decodeEntries(entries);
+            for (java.util.Map.Entry<ProfileDataValueType, String> entry : values.entrySet()) {
+                data = data.setValue(entry.getKey(), entry.getValue());
+            }
+            ProfileEntries modifiedEntries = this.profileDataConverter.encodeEntries(data, entries);
+            this.entryDataHandler.writeEntries(modifiedEntries, outputStreamSupplier, outputFormat);
+        }
     }
 }

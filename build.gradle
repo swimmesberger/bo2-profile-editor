@@ -35,6 +35,11 @@ test {
     useJUnitPlatform()
 }
 
+shadowJar {
+    archiveFileName = 'bl2.jar'
+    destinationDirectory = file("$rootDir")
+}
+
 // execute shadowJar when build is called
 tasks.build.dependsOn(shadowJar);
 

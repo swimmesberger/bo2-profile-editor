@@ -6,7 +6,8 @@ import picocli.CommandLine;
         subcommands = {
                 ConvertCommand.class,
                 SetCommand.class,
-                GetCommand.class
+                GetCommand.class,
+                ChangeFolderCommand.class
         }
 )
 public class MainProfileCommand {

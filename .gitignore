@@ -1,3 +1,5 @@
 .gradle
 .idea
 build
+bl2.config
+bl2.setup
