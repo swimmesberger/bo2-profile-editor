@@ -22,7 +22,7 @@ jobs:
           - os: macos-13
             artifact_name: bl2-macos-x64
             binary: bl2
-          - os: windows-latest
+          - os: windows-2022
             artifact_name: bl2-windows-x64
             binary: bl2.exe
           - os: ubuntu-latest
