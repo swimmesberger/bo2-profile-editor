@@ -73,6 +73,22 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
 
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Read release notes from tag
+        id: notes
+        run: |
+          notes="$(git for-each-ref "refs/tags/${{ github.ref_name }}" --format='%(contents)')"
+          : "${notes:=Release ${{ github.ref_name }}}"
+          {
+            echo "notes<<EOF"
+            echo "$notes"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
@@ -90,6 +106,8 @@ jobs:
         with:
           name: Release ${{ github.ref_name }}
           body: |
+            ${{ steps.notes.outputs.notes }}
+
             ## Downloads
 
             | Platform | Download |
@@ -99,8 +117,6 @@ jobs:
             | Linux x64 | `bl2-linux-x64-bin` |
 
             > **First time on macOS?** Right-click the `.app` → Open to bypass Gatekeeper on the first launch.
-
-            **Breaking change from v1.0:** The `-f`/`--file` flag replaced the old positional file argument on `get` and `set`. Use `bl2 get -f path/to/profile.bin` instead of `bl2 get path/to/profile.bin`.
           files: |
             dist/BL2ProfileEditor-macos-arm64.zip
             dist/bl2-windows-x64.exe
