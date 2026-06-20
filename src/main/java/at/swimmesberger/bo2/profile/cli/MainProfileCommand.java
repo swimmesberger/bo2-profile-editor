@@ -4,10 +4,12 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
         subcommands = {
+                BackupCommand.class,
+                UndoCommand.class,
                 ConvertCommand.class,
                 SetCommand.class,
                 GetCommand.class,
-                ChangeFolderCommand.class
+                ChangeProfileCommand.class
         }
 )
 public class MainProfileCommand {

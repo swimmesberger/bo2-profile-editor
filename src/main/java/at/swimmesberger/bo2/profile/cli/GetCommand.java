@@ -1,7 +1,6 @@
 package at.swimmesberger.bo2.profile.cli;
 
 import at.swimmesberger.bo2.profile.entity.ProfileData;
-import at.swimmesberger.bo2.profile.entity.ProfileDataHandler;
 import at.swimmesberger.bo2.profile.entity.ProfileDataValueType;
 import picocli.CommandLine;
 
@@ -29,17 +28,25 @@ public class GetCommand implements Callable<Integer> {
             Path inputFile = resolveInputFile();
             if (inputFile == null) return -1;
 
-            ProfileDataHandler dataHandler = new ProfileDataHandler();
-            ProfileData data = dataHandler.readData(inputFile);
+            ProfileData data = ProfileDataCache.getOrLoad(inputFile);
 
-            List<ProfileDataValueType> types = (valueTypes == null || valueTypes.isEmpty())
+            boolean printAll = (valueTypes == null || valueTypes.isEmpty());
+            List<ProfileDataValueType> types = printAll
                     ? Arrays.asList(ProfileDataValueType.values())
                     : valueTypes;
+
+            if (printAll) {
+                String profileId = inputFile.getParent() != null
+                        ? inputFile.getParent().getFileName().toString()
+                        : inputFile.toAbsolutePath().toString();
+                System.out.println("Profile: " + profileId);
+                System.out.println();
+            }
 
             int maxLen = types.stream().mapToInt(t -> t.name().length()).max().orElse(0);
             String fmt = "%-" + maxLen + "s = %s%n";
             for (ProfileDataValueType type : types) {
-                System.out.printf(fmt, type.name(), data.getValue(type));
+                System.out.printf(fmt, type.name(), ValueFormatter.format(type, String.valueOf(data.getValue(type))));
             }
             return 0;
         } catch (IOException e) {

@@ -2,154 +2,180 @@
 
 ![CI Build](https://github.com/swimmesberger/bo2-profile-editor/workflows/CI%20Build/badge.svg)
 
-Edit your Borderlands 2 profile — Golden Keys, Badass Rank, combat stats, all customizations, and more. Your save is automatically backed up before every change.
+Edit your Borderlands 2 profile — Golden Keys, Badass Rank, combat stats, all customizations, and more.
 
 ---
 
 ## Getting Started
 
-### Step 1 — Download the project
+### macOS
 
-Download and unzip this project to any folder on your computer (for example, your Desktop).
+1. Download `BL2ProfileEditor-macos-arm64.zip` (Apple Silicon) or `BL2ProfileEditor-macos-x64.zip` (Intel) from the [Releases](../../releases) page.
+2. Unzip it and double-click `BL2ProfileEditor.app`.
+3. **First time only:** if macOS says the app can't be opened, right-click it → **Open** → **Open**.
 
-### Step 2 — Run the launcher
+A Terminal window opens showing your current profile stats. Type commands directly in that window.
 
-Double-click the launcher file for your platform:
+### Windows
 
-| Platform | File | Notes |
-|---|---|---|
-| **macOS** | `bl2.command` | Right-click → Open if macOS blocks it the first time |
-| **Windows** | `bl2.bat` | Click **Yes** if Windows asks for administrator permission |
+1. Download `bl2-windows-x64.exe` from the [Releases](../../releases) page.
+2. Open a Command Prompt in the same folder and run:
+   ```cmd
+   bl2-windows-x64.exe get
+   ```
+   Optionally rename it to `bl2.exe` for shorter commands.
 
-**That's it.** The launcher handles everything automatically:
-- Installs Java if it isn't already installed
-- Builds the editor
-- Finds your Borderlands 2 save file
-- Opens with your current profile stats displayed
+### Linux
 
-Setup only runs once. Every launch after that opens instantly.
+1. Download `bl2-linux-x64-bin` from the [Releases](../../releases) page.
+2. Make it executable and run it:
+   ```bash
+   chmod +x bl2-linux-x64-bin
+   ./bl2-linux-x64-bin get
+   ```
 
 ---
 
 ## What You'll See
 
-When the launcher opens, it shows your current profile:
+When the app opens (or you run `bl2 get`), it shows your active profile:
 
 ```
 ============================================
    Borderlands 2 Profile Editor
 ============================================
 
-GOLDEN_KEYS             = 255
-BADASS_RANK             = 36150155
-BADASS_TOKENS           = 5
-MAXIMUM_HEALTH          = 9975792.3
-SHIELD_CAPACITY         = 9975792.3
+Profile: 76561199125000821
+
+GOLDEN_KEYS             = 52
+BADASS_RANK             = 1,315
+BADASS_TOKENS           = 10
+MAXIMUM_HEALTH          = 0.0
+SHIELD_CAPACITY         = 0.0
 ...
-ALL_CUSTOMIZATIONS      = true
+ALL_CUSTOMIZATIONS      = false
 
 --------------------------------------------
-  Ready. Example commands:
-    $get
-    $set max
-    $set GOLDEN_KEYS max BADASS_RANK max
-    $cd
-  Type 'exit' to quit.
+Commands:
+  bl2 backup
+  bl2 undo
+  bl2 get
+  bl2 set all max
+  bl2 set GOLDEN_KEYS max BADASS_RANK max
+  bl2 change-profile
+Type 'exit' to close this window.
 --------------------------------------------
+
+Always run bl2 backup before editing.
 ```
+
+`bl2 change-profile` only appears when more than one profile is detected.
 
 ---
 
 ## Commands
 
+All examples use `bl2`. On macOS this is already on your PATH inside the Terminal window that opens from the app.
+
+---
+
+### Backup and restore
+
+**Always create a backup before editing:**
+
+```bash
+bl2 backup
+```
+
+Creates a timestamped copy of your profile next to `profile.bin` (e.g. `profile.bin.1718650000000`) and prints the full path.
+
+**Undo the last change:**
+
+```bash
+bl2 undo
+```
+
+Restores the most recent backup created by `bl2 backup`. Prints the date the backup was made so you know exactly what you're restoring.
+
+---
+
 ### Read your profile
 
-**macOS / Linux:**
 ```bash
-$get
-```
-**Windows:**
-```cmd
-%get%
-```
+# Print all values for the active profile
+bl2 get
 
-Read specific values:
-
-**macOS / Linux:**
-```bash
-$get GOLDEN_KEYS BADASS_RANK
-```
-**Windows:**
-```cmd
-%get% GOLDEN_KEYS BADASS_RANK
+# Print specific values only
+bl2 get GOLDEN_KEYS BADASS_RANK
 ```
 
 ---
 
 ### Set values
 
-Set a single value:
+`set` shows a before → after diff for every value that changed. Only changed values are printed; if nothing changed it says so.
 
-**macOS / Linux:**
+Set a single stat:
+
 ```bash
-$set GOLDEN_KEYS 255
-$set GOLDEN_KEYS max
-```
-**Windows:**
-```cmd
-%set% GOLDEN_KEYS 255
-%set% GOLDEN_KEYS max
+bl2 set GOLDEN_KEYS 255
+bl2 set GOLDEN_KEYS max
+# Output:
+# GOLDEN_KEYS  52 → 255
 ```
 
-Set multiple values at once (one backup, one write):
+Set multiple stats in one write:
 
-**macOS / Linux:**
 ```bash
-$set GOLDEN_KEYS max BADASS_RANK max BADASS_TOKENS max
-```
-**Windows:**
-```cmd
-%set% GOLDEN_KEYS max BADASS_RANK max BADASS_TOKENS max
+bl2 set GOLDEN_KEYS max BADASS_RANK max BADASS_TOKENS max
 ```
 
-Set **everything** to max:
+Set **everything** to the maximum safe value:
 
-**macOS / Linux:**
 ```bash
-$set max
-```
-**Windows:**
-```cmd
-%set% max
+bl2 set all max
 ```
 
 ---
 
-### Switch save folder
+### Switch active profile
 
-If you have multiple Steam accounts or want to point the editor at a different save:
+When you have multiple Steam accounts the editor will ask you to choose at first launch and remember your choice. The selection prompt shows Golden Keys and Badass Rank for each account so you can tell them apart:
 
-**macOS / Linux:**
+```
+  [1] 76561199125000821  —  Keys: 201  Rank: 36,150,155
+  [2] 76561199125000822  —  Keys: 0    Rank: 1,200
+```
+
+To switch at any time:
+
 ```bash
-$cd
-```
-**Windows:**
-```cmd
-%cd%
+# List all detected profiles and choose interactively
+bl2 change-profile
+
+# Switch by Steam ID
+bl2 change-profile 76561199125000821
+
+# Switch by providing a folder path directly
+bl2 change-profile "/path/to/SaveData/76561199125000821"
+
+# Switch by providing a direct path to profile.bin
+bl2 change-profile "/path/to/profile.bin"
 ```
 
-Switch directly by Steam ID:
+After switching, the editor immediately displays the new profile's stats.
 
-**macOS / Linux:**
+---
+
+### Point to a specific profile.bin
+
+Use `-f` to bypass auto-detection entirely:
+
 ```bash
-$cd 76561199125000821
+bl2 get -f /path/to/profile.bin
+bl2 set -f /path/to/profile.bin GOLDEN_KEYS max
+bl2 backup -f /path/to/profile.bin
 ```
-**Windows:**
-```cmd
-%cd% 76561199125000821
-```
-
-Your choice is saved to `bl2.config` and remembered on every future launch.
 
 ---
 
@@ -160,7 +186,7 @@ Your choice is saved to `bl2.config` and remembered on every future launch.
 | Value Type | What It Does | Type | `max` value |
 |---|---|---|---|
 | `GOLDEN_KEYS` | Golden Keys in your Shift menu | number | `255` |
-| `BADASS_RANK` | Total Badass Rank on your profile | number | `2000000000` |
+| `BADASS_RANK` | Total Badass Rank on your profile | number | `2,000,000,000` |
 | `BADASS_TOKENS` | Unspent Badass Tokens | number | `500` |
 | `ALL_CUSTOMIZATIONS` | Unlock every skin, head, and customization | `true` / `false` | `true` |
 
@@ -168,111 +194,109 @@ Your choice is saved to `bl2.config` and remembered on every future launch.
 
 | Value Type | What It Does | `max` value |
 |---|---|---|
-| `MAXIMUM_HEALTH` | Bonus health | `9975792.3` |
-| `SHIELD_CAPACITY` | Bonus shield capacity | `9975792.3` |
-| `SHIELD_RECHARGE_DELAY` | Reduced shield recharge delay | `9975792.3` |
-| `SHIELD_RECHARGE_RATE` | Bonus shield recharge rate | `9975792.3` |
-| `MELEE_DAMAGE` | Bonus melee damage | `9975792.3` |
-| `GRENADE_DAMAGE` | Bonus grenade damage | `9975792.3` |
-| `GUN_ACCURACY` | Bonus gun accuracy | `9975792.3` |
-| `GUN_DAMAGE` | Bonus gun damage | `9975792.3` |
-| `FIRE_RATE` | Bonus fire rate | `9975792.3` |
-| `RECOIL_REDUCTION` | Reduced recoil | `9975792.3` |
-| `RELOAD_SPEED` | Bonus reload speed | `9975792.3` |
-| `ELEMENTAL_EFFECT_CHANCE` | Bonus elemental effect chance | `9975792.3` |
-| `ELEMENTAL_EFFECT_DAMAGE` | Bonus elemental effect damage | `9975792.3` |
-| `CRITICAL_HIT_DAMAGE` | Bonus critical hit damage | `9975792.3` |
-
----
-
-## Backups
-
-Every `set` command automatically creates a timestamped backup of your save before writing:
-
-```
-Backup saved: profile.bin.1718650000000
-```
-
-Backups are saved next to `profile.bin` and named `profile.bin.<number>`. To undo any change, rename the most recent backup back to `profile.bin`.
+| `MAXIMUM_HEALTH` | Bonus health | `9,975,792.3` |
+| `SHIELD_CAPACITY` | Bonus shield capacity | `9,975,792.3` |
+| `SHIELD_RECHARGE_DELAY` | Reduced shield recharge delay | `9,975,792.3` |
+| `SHIELD_RECHARGE_RATE` | Bonus shield recharge rate | `9,975,792.3` |
+| `MELEE_DAMAGE` | Bonus melee damage | `9,975,792.3` |
+| `GRENADE_DAMAGE` | Bonus grenade damage | `9,975,792.3` |
+| `GUN_ACCURACY` | Bonus gun accuracy | `9,975,792.3` |
+| `GUN_DAMAGE` | Bonus gun damage | `9,975,792.3` |
+| `FIRE_RATE` | Bonus fire rate | `9,975,792.3` |
+| `RECOIL_REDUCTION` | Reduced recoil | `9,975,792.3` |
+| `RELOAD_SPEED` | Bonus reload speed | `9,975,792.3` |
+| `ELEMENTAL_EFFECT_CHANCE` | Bonus elemental effect chance | `9,975,792.3` |
+| `ELEMENTAL_EFFECT_DAMAGE` | Bonus elemental effect damage | `9,975,792.3` |
+| `CRITICAL_HIT_DAMAGE` | Bonus critical hit damage | `9,975,792.3` |
 
 ---
 
 ## Where Is My profile.bin?
 
-| Platform | Path |
+The editor searches all of the following locations automatically. You only need to use `-f` or `change-profile` if your save is somewhere non-standard.
+
+### macOS
+
+| Launcher | Path |
 |---|---|
-| **macOS** | `~/Library/Application Support/Borderlands 2/WillowGame/SaveData/<SteamID>/profile.bin` |
-| **Windows** | `%USERPROFILE%\Documents\My Games\Borderlands 2\WillowGame\SaveData\<SteamID>\profile.bin` |
-| **Linux (Steam/Proton)** | `~/.local/share/Steam/steamapps/compatdata/49520/pfx/.../SaveData/<SteamID>/profile.bin` |
+| Steam | `~/Library/Application Support/Borderlands 2/WillowGame/SaveData/<SteamID>/profile.bin` |
+
+### Windows
+
+Steam, Epic Games, and GOG all write saves to the same Documents path.
+
+| Launcher | Path |
+|---|---|
+| Steam / Epic / GOG | `%USERPROFILE%\Documents\My Games\Borderlands 2\WillowGame\SaveData\<SteamID>\profile.bin` |
+| OneDrive-redirected Documents | `%OneDrive%\Documents\My Games\Borderlands 2\WillowGame\SaveData\<SteamID>\profile.bin` |
+
+### Linux (Steam/Proton)
+
+BL2 has no native Linux build; it runs via Proton. The editor checks all common Steam installation methods:
+
+| Installation | Path |
+|---|---|
+| Standard Steam | `~/.local/share/Steam/steamapps/compatdata/49520/pfx/.../SaveData/<SteamID>/profile.bin` |
+| Flatpak Steam | `~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/49520/pfx/.../SaveData/<SteamID>/profile.bin` |
+| Snap Steam | `~/snap/steam/common/.local/share/Steam/steamapps/compatdata/49520/pfx/.../SaveData/<SteamID>/profile.bin` |
 
 `<SteamID>` is the long number in your save folder name (e.g. `76561199125000821`).
 
 ---
 
+## Settings file
+
+The editor saves your active profile choice to a settings file so it's remembered across runs:
+
+| Platform | Location |
+|---|---|
+| macOS | `~/Library/Application Support/bl2-profile-editor/bl2.config` |
+| Windows | `%APPDATA%\bl2-profile-editor\bl2.config` |
+| Linux | `~/.config/bl2-profile-editor/bl2.config` |
+
+Run `bl2 change-profile` to update it.
+
 ---
 
 ## Troubleshooting
 
-### The launcher doesn't open
+### macOS: "app cannot be opened because it is from an unidentified developer"
 
-- **macOS:** Right-click `bl2.command` → Open → Open (macOS may block it on first launch because it was downloaded from the internet)
-- **Windows:** Right-click `bl2.bat` → Run as administrator
+Right-click `BL2ProfileEditor.app` → **Open** → **Open**. You only need to do this once.
 
-### I need to redo setup
+### The editor can't find my profile.bin
 
-Delete the file `bl2.setup` in the project folder, then launch again.
+If auto-detection fails, point directly at the file:
 
-### I want to set up manually instead of using the launcher
-
-**macOS — paste into Terminal (opened inside this folder):**
-
-Step 1 of 2 — Install Homebrew (skip if already installed, you will be asked for your Mac password):
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+bl2 get -f "/path/to/SaveData/76561199125000821/profile.bin"
 ```
 
-Step 2 of 2 — Install Java and build:
-```bash
-echo >> ~/.zprofile
-echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-eval "$(/opt/homebrew/bin/brew shellenv)"
-brew install openjdk@11
-export PATH="/opt/homebrew/opt/openjdk@11/bin:$PATH"
-chmod +x gradlew bl2.command
-./gradlew shadowJar
-setopt SH_WORD_SPLIT
-export get="java -jar bl2.jar get"
-export set="java -jar bl2.jar set"
-export cd="java -jar bl2.jar change-folder"
-$get MAXIMUM_HEALTH
-```
-
-**Windows — paste into Command Prompt (opened inside this folder):**
-```cmd
-winget install --id EclipseAdoptium.Temurin.11.JDK -e --silent --accept-package-agreements --accept-source-agreements
-set "PATH=%PATH%;%ProgramFiles%\Eclipse Adoptium\jdk-11"
-gradlew.bat shadowJar
-set get=java -jar bl2.jar get
-set set=java -jar bl2.jar set
-set cd=java -jar bl2.jar change-folder
-%get% MAXIMUM_HEALTH
-```
+Or run `bl2 change-profile` to pick from all detected folders.
 
 ### Advanced: Convert profile to JSON
 
-**macOS / Linux:**
 ```bash
-# Export
-java -jar bl2.jar convert profile.bin -of JSON_DATA -o profile.json
+# Export to JSON
+bl2 convert profile.bin -of JSON_DATA -o profile.json
 
-# Import back
-java -jar bl2.jar convert profile.json -if JSON_DATA -of COMPRESSED_LZO -o profile.bin
+# Import back from JSON
+bl2 convert profile.json -if JSON_DATA -of COMPRESSED_LZO -o profile.bin
 ```
-**Windows:**
-```cmd
-:: Export
-java -jar bl2.jar convert profile.bin -of JSON_DATA -o profile.json
 
-:: Import back
-java -jar bl2.jar convert profile.json -if JSON_DATA -of COMPRESSED_LZO -o profile.bin
-```
+---
+
+## Changes in v1.1.0
+
+- **Native binary distribution** — no Java install required, near-instant startup
+- **macOS:** distributed as `BL2ProfileEditor.app` (drag to Applications, double-click to launch)
+- **`backup` command** — create a timestamped checkpoint before editing; `undo` restores the most recent one
+- **`set` shows a before → after diff** — only changed values are printed
+- **`get` shows which profile is active** — the Steam ID appears above the stats
+- **Formatted numbers** — large values display with commas (`36,150,155` not `36150155`)
+- **Profile selection shows quick stats** — Golden Keys and Badass Rank shown per account when multiple profiles are detected
+- **Multi-launcher detection** — auto-detects saves from Steam, Epic, GOG on Windows; standard, Flatpak, and Snap Steam on Linux
+- **`change-profile`** replaces `change-folder`; accepts a Steam ID, folder path, or direct path to `profile.bin`
+- **`get`** with no arguments prints all stats; one or more type names prints only those
+- **`set`** supports multiple `TYPE value` pairs in one write; use `set all max` to set everything at once
+- **Breaking:** `-f`/`--file` flag replaces the old positional file argument on `get` and `set`

@@ -1,32 +1,42 @@
 plugins {
     id 'application'
-    id "com.github.johnrengelman.shadow" version "6.0.0"
-    id "com.palantir.graal" version "0.7.1-9-gced34a0"
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "org.graalvm.buildtools.native" version "0.10.4"
 }
 
 group 'at.swimmesberger'
-version '1.0.0'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+version '1.1.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
 
 repositories {
     mavenCentral()
 }
 
 application {
-    mainClassName = 'at.swimmesberger.bo2.profile.cli.Main'
+    mainClass = 'at.swimmesberger.bo2.profile.cli.Main'
 }
 
-graal {
-    mainClass application.mainClassName
-    outputName "${project.name}-${project.version}"
-    javaVersion '11'
-    graalVersion '20.1.0'
-    windowsVsVersion System.getenv('VS_VERSION')
-    windowsVsEdition System.getenv('VS_EDITION')
-    windowsVsVarsPath System.getenv('VC_VARS_PATH')
+graalvmNative {
+    binaries {
+        main {
+            mainClass = 'at.swimmesberger.bo2.profile.cli.Main'
+            imageName = 'bl2'
+            buildArgs.addAll(
+                '--no-fallback',
+                '-H:+ReportExceptionStackTraces',
+                // CLI processes are sub-second — Epsilon GC eliminates GC overhead entirely
+                '--gc=epsilon'
+            )
+        }
+    }
+    toolchainDetection = false
 }
 
+// picocli-codegen writes reflect-config into META-INF/native-image/<group>/<name>/
 compileJava {
     options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
@@ -40,14 +50,45 @@ shadowJar {
     destinationDirectory = file("$rootDir")
 }
 
-// execute shadowJar when build is called
-tasks.build.dependsOn(shadowJar);
+tasks.build.dependsOn(shadowJar)
+
+import org.gradle.internal.os.OperatingSystem
+
+if (OperatingSystem.current().isMacOsX()) {
+    tasks.register('createMacApp') {
+        group = 'distribution'
+        description = 'Assembles BL2ProfileEditor.app for macOS (depends on nativeCompile)'
+        dependsOn('nativeCompile')
+
+        def appContents = layout.buildDirectory.dir('macos-app/BL2ProfileEditor.app/Contents')
+        def plistSrc    = file('src/macos-app/Info.plist')
+        def launchSrc   = file('src/macos-app/MacOS/BL2ProfileEditor')
+        def nativeBin   = layout.buildDirectory.file('native/nativeCompile/bl2')
+
+        inputs.files(plistSrc, launchSrc, nativeBin)
+        outputs.dir(layout.buildDirectory.dir('macos-app'))
+
+        doLast {
+            def contents = appContents.get().asFile
+            new File(contents, 'MacOS').mkdirs()
+            new File(contents, 'Resources').mkdirs()
+
+            copy { from plistSrc; into contents }
+
+            copy { from launchSrc; into new File(contents, 'MacOS') }
+            new File(contents, 'MacOS/BL2ProfileEditor').setExecutable(true, false)
+
+            copy { from nativeBin; into new File(contents, 'Resources') }
+            new File(contents, 'Resources/bl2').setExecutable(true, false)
+        }
+    }
+}
 
 dependencies {
-    compile group: 'org.anarres.lzo', name: 'lzo-commons', version: '1.0.6'
-    compile group: 'info.picocli', name: 'picocli', version: '4.4.0'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.11.1'
-    compile group: 'org.jetbrains', name: 'annotations', version: '19.0.0'
+    implementation group: 'org.anarres.lzo', name: 'lzo-commons', version: '1.0.6'
+    implementation group: 'info.picocli', name: 'picocli', version: '4.4.0'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.11.1'
+    implementation group: 'org.jetbrains', name: 'annotations', version: '19.0.0'
 
     annotationProcessor 'info.picocli:picocli-codegen:4.4.0'
 

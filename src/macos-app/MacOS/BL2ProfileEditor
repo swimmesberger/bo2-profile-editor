@@ -1,0 +1,69 @@
+#!/bin/bash
+# Launcher for BL2ProfileEditor.app
+# macOS runs this script as CFBundleExecutable; stdout/stderr are invisible,
+# so we use osascript for any user-visible output.
+
+CONTENTS="$(cd "$(dirname "$0")/.." && pwd)"
+RESOURCES="$CONTENTS/Resources"
+BL2="$RESOURCES/bl2"
+
+error_dialog() {
+    osascript -e "display dialog \"$1\" with title \"BL2 Profile Editor\" buttons {\"OK\"} default button \"OK\" with icon stop"
+    exit 1
+}
+
+[ -f "$BL2" ] || error_dialog "The bl2 binary was not found inside the app bundle.\n\nExpected: $BL2\n\nPlease re-download BL2ProfileEditor.app from the Releases page."
+[ -x "$BL2" ] || chmod +x "$BL2" || error_dialog "Could not make the bl2 binary executable.\n\nPath: $BL2"
+
+# Write a custom .zshrc into a temp dir so the Terminal session starts with
+# the right PATH and shows the profile immediately.
+# Unquoted heredoc: $RESOURCES, $BL2, $BL2_SHELL_INIT expand NOW (launcher
+# time) so the .zshrc contains hard absolute paths. \$PATH stays literal and
+# expands later when zsh sources the file.
+BL2_SHELL_INIT="$(mktemp -d)"
+
+# Disable macOS Terminal session history before /etc/zshrc runs.
+# .zshenv is sourced first (before /etc/zshrc), so this prevents the
+# Apple Terminal session-history hook from trying to touch .zsh_sessions/.
+cat > "$BL2_SHELL_INIT/.zshenv" << 'ZSHENV'
+SHELL_SESSION_HISTORY=0
+ZSHENV
+
+cat >> "$BL2_SHELL_INIT/.zshrc" << EOF
+export PATH="$RESOURCES:\$PATH"
+builtin cd '$RESOURCES'
+clear
+echo "============================================"
+echo "   Borderlands 2 Profile Editor"
+echo "============================================"
+echo ""
+"$BL2" get
+echo ""
+echo "--------------------------------------------"
+echo "Commands:"
+echo "  bl2 backup"
+echo "  bl2 undo"
+echo "  bl2 get"
+echo "  bl2 set all max"
+echo "  bl2 set GOLDEN_KEYS max BADASS_RANK max"
+PROFILE_COUNT=\$(find "\$HOME/Library/Application Support/Borderlands 2/WillowGame/SaveData" -maxdepth 2 -name "profile.bin" 2>/dev/null | wc -l | tr -d ' ')
+[ "\$PROFILE_COUNT" -gt 1 ] && echo "  bl2 change-profile"
+echo "Type 'exit' to close this window."
+echo "--------------------------------------------"
+echo ""
+echo "Always run bl2 backup before editing."
+echo ""
+rm -rf '$BL2_SHELL_INIT'
+EOF
+
+SHELL_CMD="ZDOTDIR='$BL2_SHELL_INIT' exec zsh -i"
+osascript \
+    -e 'tell application "Terminal"' \
+    -e '    set wasOpen to (count of windows) > 0' \
+    -e '    activate' \
+    -e "    if wasOpen then" \
+    -e "        do script \"$SHELL_CMD\"" \
+    -e "    else" \
+    -e "        do script \"$SHELL_CMD\" in front window" \
+    -e "    end if" \
+    -e 'end tell'
