@@ -30,10 +30,10 @@ jobs:
             binary: bl2
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup GraalVM JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: graalvm
           java-version: '21'
@@ -46,7 +46,7 @@ jobs:
         run: ./gradlew nativeCompile
 
       - name: Upload native binary artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: build/native/nativeCompile/${{ matrix.binary }}
@@ -64,7 +64,7 @@ jobs:
 
       - name: Upload macOS app bundle artifact
         if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}-app
           path: build/macos-app/BL2ProfileEditor.zip
@@ -77,7 +77,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
 
@@ -90,7 +90,7 @@ jobs:
           chmod +x dist/bl2-linux-x64-bin
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: Release ${{ github.ref_name }}
           body: |
