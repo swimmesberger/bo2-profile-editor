@@ -19,9 +19,6 @@ jobs:
           - os: macos-latest
             artifact_name: bl2-macos-arm64
             binary: bl2
-          - os: macos-13
-            artifact_name: bl2-macos-x64
-            binary: bl2
           - os: windows-2022
             artifact_name: bl2-windows-x64
             binary: bl2.exe
@@ -84,7 +81,6 @@ jobs:
       - name: Prepare release assets
         run: |
           cp dist/bl2-macos-arm64-app/BL2ProfileEditor.zip  dist/BL2ProfileEditor-macos-arm64.zip
-          cp dist/bl2-macos-x64-app/BL2ProfileEditor.zip    dist/BL2ProfileEditor-macos-x64.zip
           cp dist/bl2-windows-x64/bl2.exe                   dist/bl2-windows-x64.exe
           cp dist/bl2-linux-x64/bl2                         dist/bl2-linux-x64-bin
           chmod +x dist/bl2-linux-x64-bin
@@ -99,7 +95,6 @@ jobs:
             | Platform | Download |
             |---|---|
             | macOS (Apple Silicon) | `BL2ProfileEditor-macos-arm64.zip` — drag to Applications |
-            | macOS (Intel) | `BL2ProfileEditor-macos-x64.zip` — drag to Applications |
             | Windows x64 | `bl2-windows-x64.exe` |
             | Linux x64 | `bl2-linux-x64-bin` |
 
@@ -108,6 +103,5 @@ jobs:
             **Breaking change from v1.0:** The `-f`/`--file` flag replaced the old positional file argument on `get` and `set`. Use `bl2 get -f path/to/profile.bin` instead of `bl2 get path/to/profile.bin`.
           files: |
             dist/BL2ProfileEditor-macos-arm64.zip
-            dist/BL2ProfileEditor-macos-x64.zip
             dist/bl2-windows-x64.exe
             dist/bl2-linux-x64-bin
