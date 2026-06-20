@@ -1,0 +1,9 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern": "META-INF/services/org.anarres.lzo.LzoLibrary"},
+      {"pattern": "META-INF/services/com.fasterxml.jackson.core.JsonFactory"},
+      {"pattern": "META-INF/services/com.fasterxml.jackson.core.ObjectCodec"}
+    ]
+  }
+}

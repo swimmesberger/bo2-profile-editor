@@ -1,0 +1,30 @@
+[
+  {
+    "name": "com.fasterxml.jackson.core.JsonFactory",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.fasterxml.jackson.core.util.DefaultPrettyPrinter",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.anarres.lzo.LzoLibrary",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.anarres.lzo.LzoLibrary1",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.anarres.lzo.ThreadLocalLzoLibrary",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  }
+]

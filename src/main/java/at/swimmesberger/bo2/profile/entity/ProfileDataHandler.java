@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Map;
 
 public class ProfileDataHandler {
     private final ProfileEntryDataHandler entryDataHandler;
@@ -97,6 +98,18 @@ public class ProfileDataHandler {
         }
     }
 
+    public ProfileEntries readEntries(Path inputFile) throws IOException {
+        return this.entryDataHandler.readEntries(inputFile);
+    }
+
+    public ProfileData decodeEntries(ProfileEntries entries) {
+        return this.profileDataConverter.decodeEntries(entries);
+    }
+
+    public ProfileData readData(Path inputFile) throws IOException {
+        return this.profileDataConverter.decodeEntries(this.entryDataHandler.readEntries(inputFile));
+    }
+
     public String getValue(Path inputFile, ProfileDataValueType type) throws IOException {
         String value;
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
@@ -127,5 +140,22 @@ public class ProfileDataHandler {
         ProfileData modifiedData = data.setValue(type, value);
         ProfileEntries modifiedEntries = this.profileDataConverter.encodeEntries(modifiedData, entries);
         this.entryDataHandler.writeEntries(modifiedEntries, outputStreamSupplier, outputFormat);
+    }
+
+    public void setValues(Path inputFile, Path outputFile, Map<ProfileDataValueType, String> values) throws IOException {
+        // Read fully before opening the output file — opening truncates when inputFile == outputFile.
+        setValues(this.entryDataHandler.readEntries(inputFile), outputFile, values);
+    }
+
+    public void setValues(ProfileEntries entries, Path outputFile, Map<ProfileDataValueType, String> values) throws IOException {
+        EntriesContainerFormat outputFormat = ProfileHandlerUtil.detectEntriesFormat(outputFile);
+        ProfileData data = this.profileDataConverter.decodeEntries(entries);
+        for (Map.Entry<ProfileDataValueType, String> entry : values.entrySet()) {
+            data = data.setValue(entry.getKey(), entry.getValue());
+        }
+        ProfileEntries modifiedEntries = this.profileDataConverter.encodeEntries(data, entries);
+        try (OutputStreamSupplier.CloseableOutputStreamSupplier outputStreamSupplier = ProfileHandlerUtil.newFileOutputSupplier(outputFile)) {
+            this.entryDataHandler.writeEntries(modifiedEntries, outputStreamSupplier, outputFormat);
+        }
     }
 }
