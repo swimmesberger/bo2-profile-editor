@@ -48,6 +48,12 @@ echo "  bl2 set all max"
 echo "  bl2 set GOLDEN_KEYS max BADASS_RANK max"
 PROFILE_COUNT=\$(find "\$HOME/Library/Application Support/Borderlands 2/WillowGame/SaveData" -maxdepth 2 -name "profile.bin" 2>/dev/null | wc -l | tr -d ' ')
 [ "\$PROFILE_COUNT" -gt 1 ] && echo "  bl2 change-profile"
+echo ""
+echo "Claptrap's Stash (Gibbed codes):"
+echo "  bl2 stash list"
+echo "  bl2 stash add 'BL2(...)'"
+echo "  bl2 stash set <slot> 'BL2(...)'"
+echo "  bl2 stash clear <slot>"
 echo "Type 'exit' to close this window."
 echo "--------------------------------------------"
 echo ""
@@ -57,13 +63,26 @@ rm -rf '$BL2_SHELL_INIT'
 EOF
 
 SHELL_CMD="ZDOTDIR='$BL2_SHELL_INIT' exec zsh -i"
+# If Terminal wasn't already running, `activate` launches it but the first
+# window may not exist yet when we call `do script`. We detect the pre-launch
+# state and poll until the window appears before using `in front window`.
 osascript \
+    -e "set termRunning to application \"Terminal\" is running" \
     -e 'tell application "Terminal"' \
-    -e '    set wasOpen to (count of windows) > 0' \
     -e '    activate' \
-    -e "    if wasOpen then" \
-    -e "        do script \"$SHELL_CMD\"" \
-    -e "    else" \
+    -e 'end tell' \
+    -e 'if not termRunning then' \
+    -e '    repeat 50 times' \
+    -e '        tell application "Terminal"' \
+    -e '            if (count of windows) > 0 then exit repeat' \
+    -e '        end tell' \
+    -e '        delay 0.1' \
+    -e '    end repeat' \
+    -e 'end if' \
+    -e 'tell application "Terminal"' \
+    -e "    if (count of windows) > 0 then" \
     -e "        do script \"$SHELL_CMD\" in front window" \
+    -e "    else" \
+    -e "        do script \"$SHELL_CMD\"" \
     -e "    end if" \
     -e 'end tell'
