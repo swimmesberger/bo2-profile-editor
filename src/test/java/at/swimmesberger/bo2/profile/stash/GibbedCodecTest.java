@@ -2,20 +2,27 @@ package at.swimmesberger.bo2.profile.stash;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Base64;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GibbedCodecTest {
 
-    private static final byte[] ITEM_16 =
-            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    // Precomputed: GibbedCodec.encode(ITEM_16) — deterministic because seed = CRC32(data)
-    private static final String CODE_16 = "BL2(8YBMCcAU8/oUO7dfO3J7H22NpLw=)";
+    // Real lootlemon codes — the canonical BL2-code format: BL2( + base64(rawSerial) + )
+    // Shield/grenade/relic/COM: first byte = 0x07 (version 7, upper bits zero)
+    private static final String LOOTLEMON_SHAM    = "BL2(BwAAAADw4wATEVSgoxBarQGEBMQHRFXE/////////z9VxP9/WcQ=)";
+    // Weapon: first byte = 0x87 (version 7 in low 3 bits; upper 5 bits carry weapon-class data)
+    private static final String LOOTLEMON_TATTLER = "BL2(hwAAAABpwgFA6AAAA6HVxmIhwVIBEAELC5YHLBJY/v+7AYTBMgHw)";
+
+    // Raw serial bytes (pure base64-decode of the inner payload)
+    private static final byte[] SHAM_BYTES    = Base64.getDecoder().decode("BwAAAADw4wATEVSgoxBarQGEBMQHRFXE/////////z9VxP9/WcQ=");
+    private static final byte[] TATTLER_BYTES = Base64.getDecoder().decode("hwAAAABpwgFA6AAAA6HVxmIhwVIBEAELC5YHLBJY/v+7AYTBMgHw");
 
     // ── isValid ───────────────────────────────────────────────────────────────
 
     @Test
     public void isValid_validCode_returnsTrue() {
-        assertTrue(new GibbedCodec().isValid(CODE_16));
+        assertTrue(new GibbedCodec().isValid(LOOTLEMON_SHAM));
     }
 
     @Test
@@ -30,48 +37,46 @@ public class GibbedCodecTest {
 
     @Test
     public void isValid_missingPrefix_returnsFalse() {
-        assertFalse(new GibbedCodec().isValid("CUyA8cAU8/oUO7dfO3J7H22NpLw=)"));
+        assertFalse(new GibbedCodec().isValid("BwAAAADw4wATEVSgoxBarQGEBMQHRFXE/////////z9VxP9/WcQ=)"));
     }
 
     @Test
     public void isValid_missingSuffix_returnsFalse() {
-        assertFalse(new GibbedCodec().isValid("BL2(CUyA8cAU8/oUO7dfO3J7H22NpLw="));
+        assertFalse(new GibbedCodec().isValid("BL2(BwAAAADw4wATEVSgoxBarQGEBMQHRFXE/////////z9VxP9/WcQ="));
     }
 
     @Test
     public void isValid_wrongGame_returnsFalse() {
-        assertFalse(new GibbedCodec().isValid("TPS(CUyA8cAU8/oUO7dfO3J7H22NpLw=)"));
+        assertFalse(new GibbedCodec().isValid("TPS(BwAAAADw4wATEVSgoxBarQGEBMQHRFXE/////////z9VxP9/WcQ=)"));
     }
 
     // ── encode ────────────────────────────────────────────────────────────────
 
     @Test
     public void encode_alwaysStartsWithBl2Prefix() {
-        String code = new GibbedCodec().encode(new byte[]{42, 43});
-        assertTrue(code.startsWith("BL2("), "Expected BL2( prefix, got: " + code);
+        assertTrue(new GibbedCodec().encode(SHAM_BYTES).startsWith("BL2("));
     }
 
     @Test
     public void encode_alwaysEndsWithClosingParen() {
-        String code = new GibbedCodec().encode(new byte[]{42, 43});
-        assertTrue(code.endsWith(")"), "Expected ) suffix, got: " + code);
+        assertTrue(new GibbedCodec().encode(SHAM_BYTES).endsWith(")"));
     }
 
     @Test
     public void encode_knownInput_returnsKnownCode() {
-        assertEquals(CODE_16, new GibbedCodec().encode(ITEM_16));
+        assertEquals(LOOTLEMON_SHAM, new GibbedCodec().encode(SHAM_BYTES));
     }
 
     @Test
     public void encode_sameInputTwice_producesSameCode() {
         GibbedCodec codec = new GibbedCodec();
-        assertEquals(codec.encode(ITEM_16), codec.encode(ITEM_16));
+        assertEquals(codec.encode(SHAM_BYTES), codec.encode(SHAM_BYTES));
     }
 
     @Test
     public void encode_differentInputs_produceDifferentCodes() {
         GibbedCodec codec = new GibbedCodec();
-        assertNotEquals(codec.encode(new byte[]{1}), codec.encode(new byte[]{2}));
+        assertNotEquals(codec.encode(SHAM_BYTES), codec.encode(TATTLER_BYTES));
     }
 
     @Test
@@ -86,14 +91,9 @@ public class GibbedCodecTest {
 
     // ── decode ────────────────────────────────────────────────────────────────
 
-    // Lootlemon raw format — shields/grenades/relics/COMs: first byte = 0x07 (version 7, upper bits 0)
-    private static final String LOOTLEMON_SHAM    = "BL2(BwAAAADw4wATEVSgoxBarQGEBMQHRFXE/////////z9VxP9/WcQ=)";
-    // Lootlemon raw format — weapon: first byte = 0x87 (version 7 in low 3 bits; upper 5 bits carry weapon-class data)
-    private static final String LOOTLEMON_TATTLER = "BL2(hwAAAABpwgFA6AAAA6HVxmIhwVIBEAELC5YHLBJY/v+7AYTBMgHw)";
-
     @Test
     public void decode_knownCode_returnsKnownBytes() {
-        assertArrayEquals(ITEM_16, new GibbedCodec().decode(CODE_16));
+        assertArrayEquals(SHAM_BYTES, new GibbedCodec().decode(LOOTLEMON_SHAM));
     }
 
     @Test
@@ -109,7 +109,6 @@ public class GibbedCodecTest {
 
     @Test
     public void decode_rawFormat_weapon_versionBitsCorrect() {
-        // Weapon first byte = 0x87: upper 5 bits carry weapon fields; low 3 bits = version 7
         byte[] serial = new GibbedCodec().decode(LOOTLEMON_TATTLER);
         assertEquals(7, serial[0] & 0x07, "Low 3 bits of first byte must be 7 (BL2 serial version)");
         assertEquals(0x87, serial[0] & 0xFF, "Weapon first byte should be 0x87");
@@ -121,16 +120,9 @@ public class GibbedCodecTest {
     }
 
     @Test
-    public void decode_singleByte_roundTrips() {
-        GibbedCodec codec = new GibbedCodec();
-        byte[] data = {(byte) 0xFF};
-        assertArrayEquals(data, codec.decode(codec.encode(data)));
-    }
-
-    @Test
     public void decode_invalidPrefix_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new GibbedCodec().decode("TPS(CUyA8cAU8/oUO7dfO3J7H22NpLw=)"));
+                () -> new GibbedCodec().decode("TPS(BwAAAADw4wATEVSgoxBarQGEBMQHRFXE/////////z9VxP9/WcQ=)"));
     }
 
     @Test
@@ -141,40 +133,51 @@ public class GibbedCodecTest {
 
     @Test
     public void decode_payloadTooShort_throwsIllegalArgumentException() {
-        // Base64 of only 3 bytes — fewer than the 4-byte seed header
-        String tooShort = "BL2(" + java.util.Base64.getEncoder().encodeToString(new byte[]{1, 2, 3}) + ")";
+        // 4 bytes — one short of the 5-byte minimum BL2 serial
+        String tooShort = "BL2(" + Base64.getEncoder().encodeToString(new byte[]{0x07, 0x00, 0x00, 0x00}) + ")";
         assertThrows(IllegalArgumentException.class, () -> new GibbedCodec().decode(tooShort));
+    }
+
+    @Test
+    public void decode_payloadTooLong_throwsIllegalArgumentException() {
+        // 41 bytes — one over Gibbed's maximum of 40
+        byte[] tooLong = new byte[41];
+        tooLong[0] = 0x07;
+        String code = "BL2(" + Base64.getEncoder().encodeToString(tooLong) + ")";
+        assertThrows(IllegalArgumentException.class, () -> new GibbedCodec().decode(code));
+    }
+
+    @Test
+    public void decode_invalidVersionBits_throwsIllegalArgumentException() {
+        // version bits = 1 (not 7) in the first byte
+        byte[] invalid = new byte[]{0x01, 0x00, 0x00, 0x00, 0x00};
+        String code = "BL2(" + Base64.getEncoder().encodeToString(invalid) + ")";
+        assertThrows(IllegalArgumentException.class, () -> new GibbedCodec().decode(code));
     }
 
     // ── round-trip ────────────────────────────────────────────────────────────
 
     @Test
-    public void roundTrip_smallPayload() {
+    public void roundTrip_shield_bytesToCode() {
         GibbedCodec codec = new GibbedCodec();
-        byte[] data = {10, 20, 30, 40};
-        assertArrayEquals(data, codec.decode(codec.encode(data)));
+        assertArrayEquals(SHAM_BYTES, codec.decode(codec.encode(SHAM_BYTES)));
     }
 
     @Test
-    public void roundTrip_largePayload() {
+    public void roundTrip_weapon_bytesToCode() {
         GibbedCodec codec = new GibbedCodec();
-        byte[] data = new byte[256];
-        for (int i = 0; i < data.length; i++) data[i] = (byte) i;
-        assertArrayEquals(data, codec.decode(codec.encode(data)));
+        assertArrayEquals(TATTLER_BYTES, codec.decode(codec.encode(TATTLER_BYTES)));
     }
 
     @Test
-    public void roundTrip_allZeroBytes() {
+    public void roundTrip_shield_codeToBytes() {
         GibbedCodec codec = new GibbedCodec();
-        byte[] data = new byte[8];
-        assertArrayEquals(data, codec.decode(codec.encode(data)));
+        assertEquals(LOOTLEMON_SHAM, codec.encode(codec.decode(LOOTLEMON_SHAM)));
     }
 
     @Test
-    public void roundTrip_allMaxBytes() {
+    public void roundTrip_weapon_codeToBytes() {
         GibbedCodec codec = new GibbedCodec();
-        byte[] data = new byte[8];
-        java.util.Arrays.fill(data, (byte) 0xFF);
-        assertArrayEquals(data, codec.decode(codec.encode(data)));
+        assertEquals(LOOTLEMON_TATTLER, codec.encode(codec.decode(LOOTLEMON_TATTLER)));
     }
 }

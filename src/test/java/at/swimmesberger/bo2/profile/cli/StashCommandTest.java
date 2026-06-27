@@ -19,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class StashCommandTest {
 
-    // Known 16-byte item and its deterministic Gibbed code (CRC32 seed)
-    private static final String KNOWN_CODE = "BL2(8YBMCcAU8/oUO7dfO3J7H22NpLw=)";
+    // Real lootlemon code (The Sham shield) — valid BL2 serial, accepted by Gibbed/lootlemon
+    private static final String KNOWN_CODE = "BL2(BwAAAADw4wATEVSgoxBarQGEBMQHRFXE/////////z9VxP9/WcQ=)";
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
