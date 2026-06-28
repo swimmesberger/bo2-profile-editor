@@ -9,7 +9,8 @@ import picocli.CommandLine;
                 ConvertCommand.class,
                 SetCommand.class,
                 GetCommand.class,
-                ChangeProfileCommand.class
+                ChangeProfileCommand.class,
+                StashCommand.class
         }
 )
 public class MainProfileCommand {
