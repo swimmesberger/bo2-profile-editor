@@ -7,6 +7,11 @@ on:
   pull_request:
     branches: [master]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and publish a release for (e.g. v2.0.0). Leave empty for a plain build."
+        required: false
+        default: ""
 
 jobs:
   build:
@@ -28,6 +33,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Setup GraalVM JDK 21
         uses: actions/setup-java@v5
@@ -70,19 +77,24 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+    if: |
+      (startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && inputs.tag != '')
 
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.tag || github.ref }}
           fetch-depth: 0
           fetch-tags: true
 
       - name: Read release notes from tag
         id: notes
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          notes="$(git for-each-ref "refs/tags/${{ github.ref_name }}" --format='%(contents)')"
-          : "${notes:=Release ${{ github.ref_name }}}"
+          notes="$(git for-each-ref "refs/tags/${TAG}" --format='%(contents)')"
+          : "${notes:=Release ${TAG}}"
           {
             echo "notes<<EOF"
             echo "$notes"
@@ -104,7 +116,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: Release ${{ inputs.tag || github.ref_name }}
           body: |
             ${{ steps.notes.outputs.notes }}
 
